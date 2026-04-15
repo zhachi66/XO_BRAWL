@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>איקס עיגול – Brawl Stars Edition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0c29;
+    --bg2: #1a1740;
+    --card: #1e1b4b;
+    --card2: #2d2a6e;
+    --accent: #f59e0b;
+    --accent2: #ec4899;
+    --x-color: #f43f5e;
+    --o-color: #38bdf8;
+    --win: #4ade80;
+    --text: #f1f5f9;
+    --sub: #94a3b8;
+    --border: #3730a3;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, var(--bg) 0%, #302b63 50%, #24243e 100%);
+    min-height: 100vh;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse at 20% 30%, rgba(139,92,246,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(236,72,153,0.1) 0%, transparent 60%);
+  }
+  #app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 16px; }
+
+  /* Header */
+  .header {
+    text-align: center; padding: 20px 0 10px;
+  }
+  .header h1 {
+    font-size: 2rem; font-weight: 900;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), #a78bfa);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: none; letter-spacing: 1px;
+  }
+  .header p { color: var(--sub); font-size: 0.85rem; margin-top: 4px; }
+
+  /* Nav */
+  .nav {
+    display: flex; justify-content: center; gap: 8px;
+    margin: 14px 0; flex-wrap: wrap;
+  }
+  .nav button {
+    background: var(--card); border: 2px solid var(--border);
+    color: var(--text); padding: 8px 16px; border-radius: 20px;
+    cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+    font-weight: 600;
+  }
+  .nav button.active, .nav button:hover {
+    background: linear-gradient(135deg, var(--accent2), #7c3aed);
+    border-color: var(--accent2); color: #fff;
+    transform: translateY(-1px); box-shadow: 0 4px 12px rgba(236,72,153,0.4);
+  }
+
+  /* Screens */
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Card */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 20px;
+    box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .card h2 { font-size: 1.1rem; margin-bottom: 14px; color: var(--accent); }
+
+  /* Buttons */
+  .btn {
+    display: block; width: 100%; padding: 12px 20px;
+    border: none; border-radius: 14px; cursor: pointer;
+    font-size: 1rem; font-weight: 700; transition: all 0.2s;
+    margin-bottom: 10px; letter-spacing: 0.5px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: #fff; box-shadow: 0 4px 15px rgba(124,58,237,0.4);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,0.5); }
+  .btn-secondary {
+    background: var(--card2); color: var(--text); border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-accent {
+    background: linear-gradient(135deg, var(--accent), #f97316);
+    color: #0f0c29; box-shadow: 0 4px 15px rgba(245,158,11,0.4);
+  }
+  .btn-sm {
+    display: inline-block; width: auto; padding: 8px 16px;
+    font-size: 0.85rem; margin-bottom: 0;
+  }
+
+  /* Difficulty selector */
+  .diff-btns { display: flex; gap: 8px; margin-bottom: 14px; }
+  .diff-btn {
+    flex: 1; padding: 10px; border: 2px solid var(--border);
+    background: var(--card2); color: var(--text); border-radius: 12px;
+    cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: all 0.2s;
+  }
+  .diff-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(245,158,11,0.15); }
+
+  /* Board */
+  .board-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .board {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; padding: 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 20px;
+  }
+  .cell {
+    width: 90px; height: 90px; display: flex; align-items: center; justify-content: center;
+    background: var(--card2); border: 2px solid var(--border);
+    border-radius: 16px; cursor: pointer; font-size: 2.5rem;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .cell:hover:not(.taken) {
+    background: rgba(124,58,237,0.2); border-color: #7c3aed;
+    transform: scale(1.05);
+  }
+  .cell.x { border-color: var(--x-color); background: rgba(244,63,94,0.12); }
+  .cell.o { border-color: var(--o-color); background: rgba(56,189,248,0.12); }
+  .cell.winner { 
+    background: rgba(74,222,128,0.2); border-color: var(--win);
+    animation: pulse 0.6s ease infinite alternate;
+  }
+  @keyframes pulse { from { box-shadow: 0 0 8px rgba(74,222,128,0.4); } to { box-shadow: 0 0 20px rgba(74,222,128,0.8); } }
+  .cell.taken { cursor: default; }
+
+  /* Player display */
+  .players-bar {
+    display: flex; gap: 10px; margin-bottom: 12px;
+  }
+  .player-card {
+    flex: 1; padding: 10px 12px; border-radius: 14px;
+    background: var(--card2); border: 2px solid transparent;
+    transition: all 0.3s; text-align: center;
+  }
+  .player-card.active-turn {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(245,158,11,0.3);
+    background: rgba(245,158,11,0.1);
+  }
+  .player-card .avatar { font-size: 1.8rem; }
+  .player-card .pname { font-size: 0.78rem; font-weight: 700; color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .player-card .psym { font-size: 0.7rem; color: var(--sub); }
+  .player-card .psym.x-sym { color: var(--x-color); }
+  .player-card .psym.o-sym { color: var(--o-color); }
+
+  /* Status */
+  .status-msg {
+    text-align: center; font-size: 1rem; font-weight: 700;
+    padding: 10px 20px; border-radius: 12px;
+    background: var(--card2); margin-bottom: 10px;
+    min-height: 42px; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat-box {
+    background: var(--card2); border-radius: 14px; padding: 12px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .stat-box .num { font-size: 1.8rem; font-weight: 900; color: var(--accent); }
+  .stat-box .lbl { font-size: 0.7rem; color: var(--sub); margin-top: 2px; }
+
+  /* Input */
+  input[type=text], input[type=number] {
+    width: 100%; padding: 10px 14px; border-radius: 10px;
+    background: var(--card2); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.95rem; margin-bottom: 10px;
+    outline: none; transition: border 0.2s;
+  }
+  input:focus { border-color: var(--accent2); }
+  label { font-size: 0.85rem; color: var(--sub); display: block; margin-bottom: 4px; }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .toggle-row span { font-size: 0.9rem; }
+  .toggle {
+    width: 44px; height: 24px; background: var(--card2); border-radius: 12px;
+    border: 1px solid var(--border); position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle.on { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+  .toggle::after {
+    content: ''; position: absolute; width: 18px; height: 18px;
+    background: #fff; border-radius: 50%; top: 2px; left: 2px;
+    transition: left 0.2s;
+  }
+  .toggle.on::after { left: 22px; }
+
+  /* Characters grid */
+  .chars-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px;
+  }
+  .char-btn {
+    padding: 8px 4px; border-radius: 12px; border: 2px solid var(--border);
+    background: var(--card2); cursor: pointer; text-align: center;
+    transition: all 0.2s; font-size: 1.4rem;
+  }
+  .char-btn .cname { font-size: 0.6rem; color: var(--sub); display: block; }
+  .char-btn.selected { border-color: var(--accent); background: rgba(245,158,11,0.15); }
+  .char-btn:hover { border-color: var(--accent2); transform: scale(1.05); }
+
+  /* Multiplayer */
+  .code-display {
+    font-size: 2rem; font-weight: 900; letter-spacing: 8px;
+    text-align: center; color: var(--accent);
+    background: var(--card2); border-radius: 14px; padding: 16px;
+    margin: 10px 0; border: 2px dashed var(--accent);
+  }
+  #qrcode { display: flex; justify-content: center; margin: 10px 0; }
+  #qrcode canvas, #qrcode img { border-radius: 10px; border: 3px solid var(--accent); }
+
+  /* Waiting */
+  .waiting-dot {
+    display: inline-block; width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%;
+    margin: 0 2px; animation: blink 1s infinite;
+  }
+  .waiting-dot:nth-child(2) { animation-delay: 0.2s; }
+  .waiting-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: #fff; padding: 12px 24px; border-radius: 24px;
+    font-weight: 700; z-index: 9999; opacity: 0;
+    transition: opacity 0.3s; pointer-events: none; text-align: center;
+    box-shadow: 0 4px 20px rgba(124,58,237,0.5);
+  }
+  #toast.show { opacity: 1; }
+
+  /* Confetti */
+  .confetti-wrap {
+    position: fixed; inset: 0; pointer-events: none; z-index: 999; overflow: hidden;
+  }
+  .conf {
+    position: absolute; width: 10px; height: 10px; border-radius: 2px;
+    animation: conffall 2.5s ease-in forwards;
+  }
+  @keyframes conffall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 700; margin-left: 6px;
+  }
+  .badge-x { background: rgba(244,63,94,0.2); color: var(--x-color); }
+  .badge-o { background: rgba(56,189,248,0.2); color: var(--o-color); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  
+  .sep { height: 1px; background: var(--border); margin: 12px 0; }
+  .text-center { text-align: center; }
+  .mt { margin-top: 10px; }
+  .small { font-size: 0.8rem; color: var(--sub); }
+  .flex-row { display: flex; gap: 8px; }
+  .flex-row .btn { flex: 1; }
+  
+  /* History list */
+  .hist-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 10px;
+    background: var(--card2); margin-bottom: 6px; font-size: 0.82rem;
+  }
+  .hist-item .res { font-weight: 900; font-size: 1rem; }
+  .hist-item .res.win { color: var(--win); }
+  .hist-item .res.lose { color: var(--x-color); }
+  .hist-item .res.draw { color: var(--sub); }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div id="app">
+  <div class="header">
+    <h1>⚡ XO Brawl ⚡</h1>
+    <p>איקס עיגול – Brawl Stars Edition</p>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" data-screen="home">🏠 בית</button>
+    <button class="nav-btn" data-screen="stats">📊 סטטס</button>
+    <button class="nav-btn" data-screen="settings">⚙️ הגדרות</button>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div id="screen-home" class="screen active">
+    <div class="card">
+      <h2>👤 שחקן: <span id="home-username">אנונימי</span> <span id="home-avatar"></span></h2>
+      <div class="stats-grid" style="margin-bottom:14px;">
+        <div class="stat-box">
+          <div class="num" id="qs-wins">0</div>
+          <div class="lbl">ניצחונות</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="qs-losses">0</div>
+          <div class="lbl">הפסדים</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="qs-draws">0</div>
+          <div class="lbl">תיקו</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="showVsAI()">🤖 משחק נגד מחשב</button>
+      <button class="btn btn-accent" onclick="showVsPlayer()">🌐 משחק רב-משתתפים</button>
+    </div>
+  </div>
+
+  <!-- VS AI SCREEN -->
+  <div id="screen-vsai" class="screen">
+    <div class="card">
+      <h2>🤖 נגד המחשב</h2>
+      <p class="small" style="margin-bottom:10px;">בחר רמת קושי:</p>
+      <div class="diff-btns">
+        <button class="diff-btn active" data-diff="easy" onclick="setDiff('easy')">😊 קל</button>
+        <button class="diff-btn" data-diff="medium" onclick="setDiff('medium')">😤 בינוני</button>
+        <button class="diff-btn" data-diff="hard" onclick="setDiff('hard')">💀 קשה</button>
+      </div>
+      <button class="btn btn-primary" onclick="startAIGame()">▶ התחל משחק!</button>
+      <button class="btn btn-secondary" onclick="showScreen('home')">◀ חזרה</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="screen-game" class="screen">
+    <div class="players-bar">
+      <div class="player-card" id="p1-card">
+        <div class="avatar" id="p1-avatar">❓</div>
+        <div class="pname" id="p1-name">שחקן 1</div>
+        <div class="psym x-sym" id="p1-sym">✕ (X)</div>
+      </div>
+      <div style="display:flex;align-items:center;font-size:1.2rem;color:var(--sub);">VS</div>
+      <div class="player-card" id="p2-card">
+        <div class="avatar" id="p2-avatar">🤖</div>
+        <div class="pname" id="p2-name">מחשב</div>
+        <div class="psym o-sym" id="p2-sym">○ (O)</div>
+      </div>
+    </div>
+    <div class="status-msg" id="status-msg">תורו של ✕</div>
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+    <div class="flex-row mt">
+      <button class="btn btn-secondary" onclick="restartGame()">🔄 שחק שוב</button>
+      <button class="btn btn-secondary" onclick="endGame()">🏠 בית</button>
+    </div>
+  </div>
+
+  <!-- VS PLAYER SCREEN -->
+  <div id="screen-vsplayer" class="screen">
+    <div class="card">
+      <h2>🌐 משחק רב-משתתפים</h2>
+      <button class="btn btn-primary" onclick="createRoom()">➕ צור חדר חדש</button>
+      <div class="sep"></div>
+      <label>הזן קוד חדר להצטרף:</label>
+      <div class="flex-row">
+        <input type="text" id="join-code-input" placeholder="XXXXXX" maxlength="6" style="flex:1;margin-bottom:0;text-align:center;font-size:1.2rem;letter-spacing:4px;">
+        <button class="btn btn-accent btn-sm" onclick="joinRoom()" style="flex:0;padding:10px 16px;">הצטרף</button>
+      </div>
+      <button class="btn btn-secondary mt" onclick="showScreen('home')">◀ חזרה</button>
+    </div>
+  </div>
+
+  <!-- ROOM SCREEN (Host waiting) -->
+  <div id="screen-room" class="screen">
+    <div class="card text-center">
+      <h2>⏳ ממתין ליריב...</h2>
+      <p class="small">שתף את הקוד או ה-QR עם חברך:</p>
+      <div class="code-display" id="room-code-display">------</div>
+      <div id="qrcode"></div>
+      <p class="small mt">ממתין לחיבור <span class="waiting-dot"></span><span class="waiting-dot"></span><span class="waiting-dot"></span></p>
+      <button class="btn btn-secondary mt" onclick="cancelRoom()">❌ ביטול</button>
+    </div>
+  </div>
+
+  <!-- STATS SCREEN -->
+  <div id="screen-stats" class="screen">
+    <div class="card">
+      <h2>📊 הסטטיסטיקות שלי</h2>
+      <p class="small" style="margin-bottom:10px;">נגד מחשב:</p>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="num" id="st-ai-w">0</div>
+          <div class="lbl">ניצחונות</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="st-ai-l">0</div>
+          <div class="lbl">הפסדים</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="st-ai-d">0</div>
+          <div class="lbl">תיקו</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <p class="small" style="margin-bottom:10px;">נגד שחקנים:</p>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="num" id="st-p-w">0</div>
+          <div class="lbl">ניצחונות</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="st-p-l">0</div>
+          <div class="lbl">הפסדים</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="st-p-d">0</div>
+          <div class="lbl">תיקו</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <p class="small" style="margin-bottom:8px;">היסטוריית משחקים:</p>
+      <div id="history-list"><p class="small text-center">אין משחקים עדיין</p></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS SCREEN -->
+  <div id="screen-settings" class="screen">
+    <div class="card">
+      <h2>⚙️ הגדרות</h2>
+      <label>שם משתמש:</label>
+      <input type="text" id="set-username" placeholder="הכנס שמך..." maxlength="16">
+      <div class="toggle-row">
+        <span>אני מעדיף להתחיל ראשון</span>
+        <div class="toggle" id="toggle-prefer-start" onclick="togglePreferStart()"></div>
+      </div>
+      <div class="sep"></div>
+      <p style="font-size:0.9rem;margin-bottom:10px;color:var(--accent);">🎮 בחר דמות Brawl Stars לייצוג שלך:</p>
+      <div class="chars-grid" id="chars-grid"></div>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 שמור הגדרות</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<script>
+// ============================================================
+// DATA & STATE
+// ============================================================
+const BRAWLERS = [
+  { id:'shelly',  emoji:'🦊', name:'Shelly' },
+  { id:'colt',    emoji:'🔫', name:'Colt' },
+  { id:'bull',    emoji:'🐂', name:'Bull' },
+  { id:'brock',   emoji:'🚀', name:'Brock' },
+  { id:'el-primo',emoji:'🥊', name:'El Primo' },
+  { id:'barley',  emoji:'🍺', name:'Barley' },
+  { id:'poco',    emoji:'🎸', name:'Poco' },
+  { id:'rosa',    emoji:'🌹', name:'Rosa' },
+  { id:'jessie',  emoji:'⚡', name:'Jessie' },
+  { id:'dynamike',emoji:'💣', name:'Dynamike' },
+  { id:'tick',    emoji:'⏰', name:'Tick' },
+  { id:'8-bit',   emoji:'👾', name:'8-Bit' },
+  { id:'rico',    emoji:'🎱', name:'Rico' },
+  { id:'darryl',  emoji:'🤖', name:'Darryl' },
+  { id:'penny',   emoji:'🦜', name:'Penny' },
+  { id:'piper',   emoji:'🎀', name:'Piper' },
+];
+
+const AI_BRAWLERS = ['🤖','👾','💀','🎯'];
+
+let state = {
+  username: 'שחקן',
+  avatar: '🦊',
+  preferStart: false,
+  stats: { ai: {w:0,l:0,d:0}, player: {w:0,l:0,d:0} },
+  history: [],
+};
+
+let game = {
+  board: Array(9).fill(null),
+  currentTurn: 'X',
+  playerSymbol: 'X',
+  aiSymbol: 'O',
+  vsAI: true,
+  difficulty: 'medium',
+  over: false,
+  p1Name: '', p2Name: '', p1Avatar: '', p2Avatar: '',
+  localSymbol: 'X', // for multiplayer
+};
+
+// Multiplayer (local simulation with localStorage polling)
+let room = {
+  code: '',
+  isHost: false,
+  interval: null,
+};
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+function loadState() {
+  try {
+    const s = localStorage.getItem('xo_brawl_state');
+    if (s) state = {...state, ...JSON.parse(s)};
+  } catch(e){}
+}
+function saveState() {
+  localStorage.setItem('xo_brawl_state', JSON.stringify(state));
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.screen === name);
+  });
+  if (name === 'stats') renderStats();
+  if (name === 'settings') renderSettings();
+  if (name === 'home') renderHome();
+}
+
+document.querySelectorAll('.nav-btn').forEach(b => {
+  b.addEventListener('click', () => showScreen(b.dataset.screen));
+});
+
+// ============================================================
+// HOME
+// ============================================================
+function renderHome() {
+  document.getElementById('home-username').textContent = state.username;
+  document.getElementById('home-avatar').textContent = state.avatar;
+  const all = {...state.stats.ai};
+  ['w','l','d'].forEach(k => {
+    all[k] = (state.stats.ai[k]||0) + (state.stats.player[k]||0);
+  });
+  document.getElementById('qs-wins').textContent = all.w;
+  document.getElementById('qs-losses').textContent = all.l;
+  document.getElementById('qs-draws').textContent = all.d;
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function renderSettings() {
+  document.getElementById('set-username').value = state.username;
+  const tog = document.getElementById('toggle-prefer-start');
+  tog.classList.toggle('on', state.preferStart);
+
+  const grid = document.getElementById('chars-grid');
+  grid.innerHTML = '';
+  BRAWLERS.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'char-btn' + (state.avatar === b.emoji ? ' selected' : '');
+    btn.innerHTML = `${b.emoji}<span class="cname">${b.name}</span>`;
+    btn.onclick = () => {
+      document.querySelectorAll('.char-btn').forEach(x => x.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.avatar = b.emoji;
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function togglePreferStart() {
+  state.preferStart = !state.preferStart;
+  document.getElementById('toggle-prefer-start').classList.toggle('on', state.preferStart);
+}
+
+function saveSettings() {
+  const un = document.getElementById('set-username').value.trim();
+  if (un) state.username = un;
+  saveState();
+  showToast('✅ הגדרות נשמרו!');
+  renderHome();
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function renderStats() {
+  ['w','l','d'].forEach(k => {
+    document.getElementById('st-ai-'+k).textContent = state.stats.ai[k]||0;
+    document.getElementById('st-p-'+k).textContent = state.stats.player[k]||0;
+  });
+
+  const hl = document.getElementById('history-list');
+  if (!state.history.length) {
+    hl.innerHTML = '<p class="small text-center">אין משחקים עדיין</p>';
+    return;
+  }
+  hl.innerHTML = state.history.slice(-20).reverse().map(h => `
+    <div class="hist-item">
+      <span class="res ${h.result}">${h.result==='win'?'🏆':h.result==='lose'?'💀':'🤝'}</span>
+      <div>
+        <div>${h.vs}</div>
+        <div class="small">${h.type==='ai'?'נגד מחשב':'נגד שחקן'} · ${h.diff||''} · ${h.date}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// VS AI
+// ============================================================
+let currentDiff = 'medium';
+function setDiff(d) {
+  currentDiff = d;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.toggle('active', b.dataset.diff === d));
+}
+function showVsAI() { showScreen('vsai'); }
+
+function startAIGame() {
+  game.vsAI = true;
+  game.difficulty = currentDiff;
+
+  // Determine who starts
+  const aiPrefersStart = false;
+  let playerStarts;
+  if (state.preferStart && !aiPrefersStart) playerStarts = true;
+  else if (!state.preferStart && aiPrefersStart) playerStarts = false;
+  else playerStarts = Math.random() < 0.5;
+
+  game.playerSymbol = playerStarts ? 'X' : 'O';
+  game.aiSymbol = playerStarts ? 'O' : 'X';
+
+  game.p1Name = state.username;
+  game.p1Avatar = state.avatar;
+  game.p2Name = 'AI ' + currentDiff;
+  game.p2Avatar = AI_BRAWLERS[Math.floor(Math.random()*AI_BRAWLERS.length)];
+
+  initGameUI();
+  showScreen('game');
+
+  if (game.currentTurn === game.aiSymbol) {
+    setTimeout(aiMove, 600);
+  }
+}
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+function initGameUI() {
+  game.board = Array(9).fill(null);
+  game.currentTurn = 'X';
+  game.over = false;
+
+  // Assign player cards
+  const p1isX = game.playerSymbol === 'X';
+  document.getElementById('p1-avatar').textContent = p1isX ? game.p1Avatar : game.p2Avatar;
+  document.getElementById('p1-name').textContent = p1isX ? game.p1Name : game.p2Name;
+  document.getElementById('p1-sym').textContent = '✕ (X)';
+  document.getElementById('p1-sym').className = 'psym x-sym';
+
+  document.getElementById('p2-avatar').textContent = p1isX ? game.p2Avatar : game.p1Avatar;
+  document.getElementById('p2-name').textContent = p1isX ? game.p2Name : game.p1Name;
+  document.getElementById('p2-sym').textContent = '○ (O)';
+  document.getElementById('p2-sym').className = 'psym o-sym';
+
+  renderBoard();
+  updateStatus();
+}
+
+function renderBoard() {
+  const b = document.getElementById('board');
+  b.innerHTML = '';
+  game.board.forEach((v, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (v ? ' taken ' + v.toLowerCase() : '');
+    cell.textContent = v === 'X' ? '✕' : v === 'O' ? '○' : '';
+    cell.onclick = () => handleClick(i);
+    b.appendChild(cell);
+  });
+}
+
+function handleClick(i) {
+  if (game.over || game.board[i]) return;
+  if (game.vsAI && game.currentTurn !== game.playerSymbol) return;
+  if (!game.vsAI && game.currentTurn !== game.localSymbol) return;
+
+  makeMove(i, game.currentTurn);
+
+  const win = checkWin();
+  if (win) { handleGameOver(win); return; }
+  if (game.board.every(Boolean)) { handleDraw(); return; }
+
+  game.currentTurn = game.currentTurn === 'X' ? 'O' : 'X';
+  updateStatus();
+  renderBoard();
+
+  if (game.vsAI && game.currentTurn === game.aiSymbol) {
+    setTimeout(aiMove, 400 + Math.random()*300);
+  }
+}
+
+function makeMove(i, sym) {
+  game.board[i] = sym;
+}
+
+function checkWin() {
+  for (const [a,b,c] of WINS) {
+    if (game.board[a] && game.board[a]===game.board[b] && game.board[b]===game.board[c])
+      return [a,b,c];
+  }
+  return null;
+}
+
+function updateStatus() {
+  const whoName = game.currentTurn === 'X' ?
+    (game.playerSymbol==='X' ? game.p1Name : game.p2Name) :
+    (game.playerSymbol==='O' ? game.p1Name : game.p2Name);
+  document.getElementById('status-msg').textContent =
+    `תור ${game.currentTurn==='X'?'✕':'○'} – ${whoName}`;
+
+  document.getElementById('p1-card').classList.toggle('active-turn', game.currentTurn==='X');
+  document.getElementById('p2-card').classList.toggle('active-turn', game.currentTurn==='O');
+}
+
+function handleGameOver(winLine) {
+  game.over = true;
+  renderBoard(winLine);
+  highlightWin(winLine);
+
+  const winnerIsPlayer = game.currentTurn === game.playerSymbol;
+  const msg = winnerIsPlayer ?
+    `🏆 ניצחת! כל הכבוד ${state.username}!` :
+    `😔 המחשב ניצח. נסה שוב!`;
+  document.getElementById('status-msg').textContent = msg;
+
+  if (game.vsAI) {
+    if (winnerIsPlayer) { state.stats.ai.w=(state.stats.ai.w||0)+1; triggerConfetti(); }
+    else state.stats.ai.l=(state.stats.ai.l||0)+1;
+    addHistory(winnerIsPlayer?'win':'lose', 'AI '+game.difficulty, 'ai', game.difficulty);
+  } else {
+    const localWon = game.currentTurn === game.localSymbol;
+    if (localWon) { state.stats.player.w=(state.stats.player.w||0)+1; triggerConfetti(); }
+    else state.stats.player.l=(state.stats.player.l||0)+1;
+    addHistory(localWon?'win':'lose', game.p2Name, 'player', '');
+  }
+  saveState();
+}
+
+function handleDraw() {
+  game.over = true;
+  document.getElementById('status-msg').textContent = '🤝 תיקו! משחק טוב לשניכם!';
+  if (game.vsAI) state.stats.ai.d=(state.stats.ai.d||0)+1;
+  else state.stats.player.d=(state.stats.player.d||0)+1;
+  addHistory('draw', game.vsAI?'AI':game.p2Name, game.vsAI?'ai':'player', game.difficulty||'');
+  saveState();
+}
+
+function highlightWin(line) {
+  const cells = document.getElementById('board').children;
+  line.forEach(i => cells[i].classList.add('winner'));
+}
+
+function restartGame() {
+  if (game.vsAI) startAIGame();
+  else startMultiGame();
+}
+
+function endGame() {
+  if (room.interval) { clearInterval(room.interval); room.interval=null; }
+  showScreen('home');
+  renderHome();
+}
+
+function addHistory(result, vs, type, diff) {
+  state.history.push({
+    result, vs, type, diff,
+    date: new Date().toLocaleDateString('he-IL')
+  });
+  if (state.history.length > 100) state.history = state.history.slice(-100);
+}
+
+// ============================================================
+// AI
+// ============================================================
+function aiMove() {
+  if (game.over) return;
+  const move = getBestMove(game.difficulty);
+  makeMove(move, game.aiSymbol);
+
+  const win = checkWin();
+  if (win) { renderBoard(); handleGameOver(win); return; }
+  if (game.board.every(Boolean)) { renderBoard(); handleDraw(); return; }
+
+  game.currentTurn = game.playerSymbol;
+  updateStatus();
+  renderBoard();
+}
+
+function getBestMove(diff) {
+  const empty = game.board.map((v,i)=>v?null:i).filter(x=>x!==null);
+  if (diff === 'easy') {
+    // 70% random
+    if (Math.random() < 0.7) return empty[Math.floor(Math.random()*empty.length)];
+    return minimax(game.board, game.aiSymbol, game.aiSymbol, game.playerSymbol).idx;
+  }
+  if (diff === 'medium') {
+    // 40% random
+    if (Math.random() < 0.4) return empty[Math.floor(Math.random()*empty.length)];
+    return minimax(game.board, game.aiSymbol, game.aiSymbol, game.playerSymbol).idx;
+  }
+  // hard: always minimax
+  return minimax(game.board, game.aiSymbol, game.aiSymbol, game.playerSymbol).idx;
+}
+
+function minimax(board, sym, aiSym, playerSym, depth=0) {
+  const wl = checkWinBoard(board);
+  if (wl) {
+    const winner = board[wl[0]];
+    return { score: winner===aiSym ? 10-depth : depth-10 };
+  }
+  const empty = board.map((v,i)=>v?null:i).filter(x=>x!==null);
+  if (!empty.length) return { score: 0 };
+
+  const moves = [];
+  for (const i of empty) {
+    const nb = [...board]; nb[i] = sym;
+    const res = minimax(nb, sym===aiSym?playerSym:aiSym, aiSym, playerSym, depth+1);
+    moves.push({ idx: i, score: res.score });
+  }
+  if (sym === aiSym) {
+    return moves.reduce((a,b) => b.score>a.score?b:a);
+  } else {
+    return moves.reduce((a,b) => b.score<a.score?b:a);
+  }
+}
+
+function checkWinBoard(board) {
+  for (const [a,b,c] of WINS) {
+    if (board[a] && board[a]===board[b] && board[b]===board[c]) return [a,b,c];
+  }
+  return null;
+}
+
+// ============================================================
+// MULTIPLAYER (Local via localStorage polling)
+// ============================================================
+function showVsPlayer() { showScreen('vsplayer'); }
+
+function genCode() {
+  return Math.random().toString(36).substring(2,8).toUpperCase();
+}
+
+function createRoom() {
+  room.code = genCode();
+  room.isHost = true;
+
+  const roomData = {
+    host: state.username,
+    hostAvatar: state.avatar,
+    hostPrefer: state.preferStart,
+    guest: null,
+    guestAvatar: null,
+    guestPrefer: null,
+    board: Array(9).fill(null),
+    turn: null,
+    hostSym: null,
+    guestSym: null,
+    over: false,
+    result: null,
+    created: Date.now(),
+  };
+  localStorage.setItem('xo_room_' + room.code, JSON.stringify(roomData));
+
+  showScreen('room');
+  document.getElementById('room-code-display').textContent = room.code;
+  generateQR(room.code);
+
+  room.interval = setInterval(() => {
+    const rd = getRoomData(room.code);
+    if (!rd) return;
+    if (rd.guest) {
+      clearInterval(room.interval);
+      room.interval = null;
+      startMultiFromRoom(rd, true);
+    }
+  }, 1000);
+}
+
+function generateQR(code) {
+  const el = document.getElementById('qrcode');
+  el.innerHTML = '';
+  const url = window.location.href.split('#')[0] + '#join:' + code;
+  try {
+    new QRCode(el, { text: url, width: 140, height: 140, colorDark:'#f59e0b', colorLight:'#1e1b4b' });
+  } catch(e) {
+    el.innerHTML = '<p class="small">לא ניתן לייצר QR</p>';
+  }
+}
+
+function joinRoom() {
+  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+  if (code.length !== 6) { showToast('קוד חייב להיות 6 תווים'); return; }
+  const rd = getRoomData(code);
+  if (!rd) { showToast('❌ חדר לא נמצא!'); return; }
+  if (rd.guest) { showToast('❌ החדר כבר מלא!'); return; }
+
+  room.code = code;
+  room.isHost = false;
+
+  rd.guest = state.username;
+  rd.guestAvatar = state.avatar;
+  rd.guestPrefer = state.preferStart;
+  setRoomData(code, rd);
+
+  startMultiFromRoom(rd, false);
+}
+
+function cancelRoom() {
+  if (room.interval) { clearInterval(room.interval); room.interval=null; }
+  localStorage.removeItem('xo_room_' + room.code);
+  showScreen('home');
+}
+
+function getRoomData(code) {
+  try { return JSON.parse(localStorage.getItem('xo_room_' + code)); } catch(e) { return null; }
+}
+function setRoomData(code, data) {
+  localStorage.setItem('xo_room_' + code, JSON.stringify(data));
+}
+
+function startMultiFromRoom(rd, isHost) {
+  // Decide who starts
+  let hostStarts;
+  if (rd.hostPrefer && !rd.guestPrefer) hostStarts = true;
+  else if (!rd.hostPrefer && rd.guestPrefer) hostStarts = false;
+  else hostStarts = Math.random() < 0.5;
+
+  const hostSym = hostStarts ? 'X' : 'O';
+  const guestSym = hostStarts ? 'O' : 'X';
+
+  if (isHost) {
+    const updated = getRoomData(room.code) || rd;
+    updated.hostSym = hostSym;
+    updated.guestSym = guestSym;
+    updated.turn = 'X';
+    updated.board = Array(9).fill(null);
+    setRoomData(room.code, updated);
+  }
+
+  game.vsAI = false;
+  game.board = Array(9).fill(null);
+  game.currentTurn = 'X';
+  game.over = false;
+  game.localSymbol = isHost ? hostSym : guestSym;
+  game.playerSymbol = game.localSymbol;
+  game.aiSymbol = isHost ? guestSym : hostSym;
+
+  game.p1Name = state.username;
+  game.p1Avatar = state.avatar;
+  game.p2Name = isHost ? (rd.guest||'יריב') : rd.host;
+  game.p2Avatar = isHost ? (rd.guestAvatar||'👤') : rd.hostAvatar;
+
+  initGameUI();
+  showScreen('game');
+
+  // Poll for other player's move
+  room.interval = setInterval(() => pollRoomMove(), 800);
+}
+
+function startMultiGame() {
+  if (room.code) {
+    const rd = getRoomData(room.code);
+    if (rd) startMultiFromRoom(rd, room.isHost);
+  }
+}
+
+function pollRoomMove() {
+  if (game.over) { clearInterval(room.interval); room.interval=null; return; }
+  const rd = getRoomData(room.code);
+  if (!rd) return;
+  // Sync board
+  const newBoard = rd.board;
+  let changed = false;
+  newBoard.forEach((v,i) => { if (v && !game.board[i]) { game.board[i]=v; changed=true; } });
+  if (changed) {
+    game.currentTurn = rd.turn;
+    const win = checkWin();
+    if (win) { renderBoard(); handleGameOver(win); return; }
+    if (game.board.every(Boolean)) { renderBoard(); handleDraw(); return; }
+    updateStatus(); renderBoard();
+  }
+}
+
+// Override handleClick for multiplayer sync
+const origHandleClick = handleClick;
+function handleClick(i) {
+  if (game.over || game.board[i]) return;
+  if (!game.vsAI && game.currentTurn !== game.localSymbol) {
+    showToast('זה לא התור שלך!'); return;
+  }
+  if (game.vsAI && game.currentTurn !== game.playerSymbol) return;
+
+  makeMove(i, game.currentTurn);
+
+  if (!game.vsAI) {
+    const rd = getRoomData(room.code);
+    if (rd) {
+      rd.board = game.board;
+      rd.turn = game.currentTurn === 'X' ? 'O' : 'X';
+      setRoomData(room.code, rd);
+    }
+  }
+
+  const win = checkWin();
+  if (win) { renderBoard(); handleGameOver(win); return; }
+  if (game.board.every(Boolean)) { renderBoard(); handleDraw(); return; }
+
+  game.currentTurn = game.currentTurn === 'X' ? 'O' : 'X';
+  updateStatus();
+  renderBoard();
+
+  if (game.vsAI && game.currentTurn === game.aiSymbol) {
+    setTimeout(aiMove, 400 + Math.random()*300);
+  }
+}
+
+// ============================================================
+// EFFECTS
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function triggerConfetti() {
+  const wrap = document.getElementById('confetti-wrap');
+  wrap.innerHTML = '';
+  const colors = ['#f59e0b','#ec4899','#38bdf8','#4ade80','#a78bfa','#f43f5e'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'conf';
+    el.style.cssText = `
+      left: ${Math.random()*100}vw;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      width: ${6+Math.random()*8}px; height: ${6+Math.random()*8}px;
+      border-radius: ${Math.random()>0.5?'50%':'2px'};
+      animation-delay: ${Math.random()*1.5}s;
+      animation-duration: ${2+Math.random()*1.5}s;
+    `;
+    wrap.appendChild(el);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; }, 4000);
+}
+
+// ============================================================
+// QR HASH JOIN
+// ============================================================
+function checkHashJoin() {
+  const hash = window.location.hash;
+  if (hash.startsWith('#join:')) {
+    const code = hash.substring(6);
+    window.location.hash = '';
+    showScreen('vsplayer');
+    document.getElementById('join-code-input').value = code;
+    setTimeout(() => joinRoom(), 300);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+renderHome();
+renderSettings();
+checkHashJoin();
+</script>
+</body>
+</html>
