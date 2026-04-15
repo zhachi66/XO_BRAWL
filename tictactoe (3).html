@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>איקס עיגול – Brawl Stars Edition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#0f0c29;--bg2:#1a1740;--card:#1e1b4b;--card2:#2d2a6e;--accent:#f59e0b;--accent2:#ec4899;--x-color:#f43f5e;--o-color:#38bdf8;--win:#4ade80;--text:#f1f5f9;--sub:#94a3b8;--border:#3730a3;--shadow:0 8px 32px rgba(0,0,0,.5);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,var(--bg) 0%,#302b63 50%,#24243e 100%);min-height:100vh;color:var(--text);overflow-x:hidden;}
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 20% 30%,rgba(139,92,246,.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 70%,rgba(236,72,153,.1) 0%,transparent 60%);}
+#app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:16px;}
+.header{text-align:center;padding:20px 0 10px;}
+.header h1{font-size:2rem;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent2),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;}
+.header p{color:var(--sub);font-size:.85rem;margin-top:4px;}
+.nav{display:flex;justify-content:center;gap:8px;margin:14px 0;flex-wrap:wrap;}
+.nav button{background:var(--card);border:2px solid var(--border);color:var(--text);padding:8px 16px;border-radius:20px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;}
+.nav button.active,.nav button:hover{background:linear-gradient(135deg,var(--accent2),#7c3aed);border-color:var(--accent2);color:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(236,72,153,.4);}
+.screen{display:none;}.screen.active{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+.card h2{font-size:1.1rem;margin-bottom:14px;color:var(--accent);}
+.btn{display:block;width:100%;padding:12px 20px;border:none;border-radius:14px;cursor:pointer;font-size:1rem;font-weight:700;transition:all .2s;margin-bottom:10px;letter-spacing:.5px;}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,58,237,.5);}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--border);}
+.btn-accent{background:linear-gradient(135deg,var(--accent),#f97316);color:#0f0c29;box-shadow:0 4px 15px rgba(245,158,11,.4);}
+.btn-sm{display:inline-block;width:auto;padding:8px 16px;font-size:.85rem;margin-bottom:0;}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;}
+.diff-btns{display:flex;gap:8px;margin-bottom:14px;}
+.diff-btn{flex:1;padding:10px;border:2px solid var(--border);background:var(--card2);color:var(--text);border-radius:12px;cursor:pointer;font-size:.85rem;font-weight:700;transition:all .2s;}
+.diff-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(245,158,11,.15);}
+.board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px;background:rgba(255,255,255,.03);border-radius:20px;}
+.cell{width:90px;height:90px;display:flex;align-items:center;justify-content:center;background:var(--card2);border:2px solid var(--border);border-radius:16px;cursor:pointer;font-size:2.5rem;transition:all .2s;}
+.cell:hover:not(.taken){background:rgba(124,58,237,.2);border-color:#7c3aed;transform:scale(1.05);}
+.cell.x{border-color:var(--x-color);background:rgba(244,63,94,.12);}
+.cell.o{border-color:var(--o-color);background:rgba(56,189,248,.12);}
+.cell.winner{background:rgba(74,222,128,.2);border-color:var(--win);animation:pulse .6s ease infinite alternate;}
+@keyframes pulse{from{box-shadow:0 0 8px rgba(74,222,128,.4)}to{box-shadow:0 0 20px rgba(74,222,128,.8)}}
+.cell.taken{cursor:default;}
+.players-bar{display:flex;gap:10px;margin-bottom:12px;}
+.player-card{flex:1;padding:10px 12px;border-radius:14px;background:var(--card2);border:2px solid transparent;transition:all .3s;text-align:center;}
+.player-card.active-turn{border-color:var(--accent);box-shadow:0 0 12px rgba(245,158,11,.3);background:rgba(245,158,11,.1);}
+.player-card .avatar{font-size:1.8rem;}
+.player-card .pname{font-size:.78rem;font-weight:700;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.player-card .psym{font-size:.7rem;}.player-card .psym.x-sym{color:var(--x-color);}.player-card .psym.o-sym{color:var(--o-color);}
+.status-msg{text-align:center;font-size:1rem;font-weight:700;padding:10px 20px;border-radius:12px;background:var(--card2);margin-bottom:10px;min-height:42px;display:flex;align-items:center;justify-content:center;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.stat-box{background:var(--card2);border-radius:14px;padding:12px;text-align:center;border:1px solid var(--border);}
+.stat-box .num{font-size:1.8rem;font-weight:900;color:var(--accent);}
+.stat-box .lbl{font-size:.7rem;color:var(--sub);margin-top:2px;}
+input[type=text]{width:100%;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:.95rem;margin-bottom:10px;outline:none;transition:border .2s;}
+input:focus{border-color:var(--accent2);}
+label{font-size:.85rem;color:var(--sub);display:block;margin-bottom:4px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.toggle{width:44px;height:24px;background:var(--card2);border-radius:12px;border:1px solid var(--border);position:relative;cursor:pointer;transition:background .2s;}
+.toggle.on{background:linear-gradient(135deg,#7c3aed,#ec4899);}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;}
+.toggle.on::after{left:22px;}
+.chars-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+.char-btn{padding:8px 4px;border-radius:12px;border:2px solid var(--border);background:var(--card2);cursor:pointer;text-align:center;transition:all .2s;font-size:1.4rem;}
+.char-btn .cname{font-size:.6rem;color:var(--sub);display:block;}
+.char-btn.selected{border-color:var(--accent);background:rgba(245,158,11,.15);}
+.char-btn:hover{border-color:var(--accent2);transform:scale(1.05);}
+.code-display{font-size:2rem;font-weight:900;letter-spacing:8px;text-align:center;color:var(--accent);background:var(--card2);border-radius:14px;padding:16px;margin:10px 0;border:2px dashed var(--accent);}
+#qrcode{display:flex;justify-content:center;margin:10px 0;}
+#qrcode canvas,#qrcode img{border-radius:10px;border:3px solid var(--accent);}
+.waiting-dot{display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%;margin:0 2px;animation:blink 1s infinite;}
+.waiting-dot:nth-child(2){animation-delay:.2s;}.waiting-dot:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;padding:12px 24px;border-radius:24px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;box-shadow:0 4px 20px rgba(124,58,237,.5);}
+#toast.show{opacity:1;}
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;}
+.conf{position:absolute;animation:conffall 2.5s ease-in forwards;}
+@keyframes conffall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.sep{height:1px;background:var(--border);margin:12px 0;}
+.text-center{text-align:center;}.mt{margin-top:10px;}.small{font-size:.8rem;color:var(--sub);}
+.flex-row{display:flex;gap:8px;}.flex-row .btn{flex:1;}
+.hist-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:var(--card2);margin-bottom:6px;font-size:.82rem;}
+.hist-item .res{font-weight:900;font-size:1rem;}
+.hist-item .res.win{color:var(--win);}.hist-item .res.lose{color:var(--x-color);}.hist-item .res.draw{color:var(--sub);}
+.warn-box{background:rgba(244,63,94,.1);border:1px solid var(--x-color);border-radius:12px;padding:12px;margin-bottom:12px;font-size:.82rem;color:var(--x-color);}
+.info-box{background:rgba(56,189,248,.1);border:1px solid var(--o-color);border-radius:12px;padding:12px;margin-bottom:12px;font-size:.82rem;color:var(--o-color);}
+.conn-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+.conn-dot.green{background:var(--win);}.conn-dot.red{background:var(--x-color);}.conn-dot.yellow{background:var(--accent);animation:blink 1s infinite;}
+
+/* Firebase modal */
+#fb-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+#fb-modal-inner{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:22px;max-width:440px;width:100%;margin:auto;}
+#fb-modal-inner h2{color:var(--accent);margin-bottom:8px;font-size:1.15rem;}
+.step{background:var(--card2);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:.82rem;border-right:3px solid var(--accent2);line-height:1.6;}
+.step a{color:var(--accent);text-decoration:none;}
+.step strong{color:var(--text);}
+#fb-config-input{width:100%;padding:10px;border-radius:10px;background:#0a0820;border:1px solid var(--border);color:#a3e635;font-family:monospace;font-size:.75rem;height:130px;resize:vertical;margin-bottom:10px;outline:none;direction:ltr;}
+#fb-config-input:focus{border-color:var(--accent2);}
+.fb-status{padding:8px 14px;border-radius:10px;font-size:.82rem;margin-bottom:10px;text-align:center;}
+.fb-status.ok{background:rgba(74,222,128,.15);color:var(--win);border:1px solid var(--win);}
+.fb-status.err{background:rgba(244,63,94,.15);color:var(--x-color);border:1px solid var(--x-color);}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- Firebase Modal -->
+<div id="fb-modal" style="display:none;">
+  <div id="fb-modal-inner">
+    <h2>🔥 הגדרת Firebase – פעם אחת בלבד</h2>
+    <p class="small" style="margin-bottom:12px;line-height:1.7;">כדי שמשחק הרשת יעבוד בין מכשירים שונים דרך האינטרנט, צריך Firebase (חינמי לחלוטין):</p>
+    <div class="step">1. היכנס ל-<a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> עם חשבון Google</div>
+    <div class="step">2. לחץ <strong>Add project</strong> ← שם לפרויקט ← Continue (השאר הכל כברירת מחדל)</div>
+    <div class="step">3. בפרויקט: <strong>Build ← Realtime Database ← Create database</strong> ← בחר <strong>"Start in test mode"</strong> ← Enable</div>
+    <div class="step">4. לחץ על סמל ה-<strong>&lt;/&gt; (Web)</strong> בדף הראשי ← Register app ← העתק את <strong>firebaseConfig</strong></div>
+    <div class="step">5. הדבק את הקוד כאן ↓ (כולל הסוגריים {})</div>
+    <textarea id="fb-config-input" placeholder='{
+  "apiKey": "AIza...",
+  "authDomain": "project.firebaseapp.com",
+  "databaseURL": "https://project-default-rtdb.firebaseio.com",
+  "projectId": "project-id",
+  "storageBucket": "project.appspot.com",
+  "messagingSenderId": "123456",
+  "appId": "1:123:web:abc"
+}'></textarea>
+    <div id="fb-status"></div>
+    <button class="btn btn-primary" onclick="connectFirebase()">🔌 התחבר ל-Firebase</button>
+    <button class="btn btn-secondary" onclick="skipFirebase()">▶ המשך ללא רשת (מחשב בלבד)</button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="header">
+    <h1>⚡ XO Brawl ⚡</h1>
+    <p><span class="conn-dot" id="conn-dot"></span><span id="conn-label">לא מחובר</span></p>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" data-screen="home">🏠 בית</button>
+    <button class="nav-btn" data-screen="stats">📊 סטטס</button>
+    <button class="nav-btn" data-screen="settings">⚙️ הגדרות</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="card">
+      <h2>👤 <span id="home-username">שחקן</span> <span id="home-avatar"></span></h2>
+      <div class="stats-grid" style="margin-bottom:14px;">
+        <div class="stat-box"><div class="num" id="qs-wins">0</div><div class="lbl">ניצחונות</div></div>
+        <div class="stat-box"><div class="num" id="qs-losses">0</div><div class="lbl">הפסדים</div></div>
+        <div class="stat-box"><div class="num" id="qs-draws">0</div><div class="lbl">תיקו</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="showVsAI()">🤖 משחק נגד מחשב</button>
+      <button class="btn btn-accent" onclick="showVsPlayer()">🌐 משחק רשת עם חבר</button>
+    </div>
+  </div>
+
+  <!-- VS AI -->
+  <div id="screen-vsai" class="screen">
+    <div class="card">
+      <h2>🤖 נגד המחשב</h2>
+      <p class="small" style="margin-bottom:10px;">בחר רמת קושי:</p>
+      <div class="diff-btns">
+        <button class="diff-btn active" data-diff="easy" onclick="setDiff('easy')">😊 קל</button>
+        <button class="diff-btn" data-diff="medium" onclick="setDiff('medium')">😤 בינוני</button>
+        <button class="diff-btn" data-diff="hard" onclick="setDiff('hard')">💀 קשה</button>
+      </div>
+      <button class="btn btn-primary" onclick="startAIGame()">▶ התחל!</button>
+      <button class="btn btn-secondary" onclick="showScreen('home')">◀ חזרה</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen">
+    <div class="players-bar">
+      <div class="player-card" id="p1-card">
+        <div class="avatar" id="p1-avatar">❓</div>
+        <div class="pname" id="p1-name">שחקן 1</div>
+        <div class="psym x-sym" id="p1-sym">✕ (X)</div>
+      </div>
+      <div style="display:flex;align-items:center;font-size:1.2rem;color:var(--sub);">VS</div>
+      <div class="player-card" id="p2-card">
+        <div class="avatar" id="p2-avatar">🤖</div>
+        <div class="pname" id="p2-name">מחשב</div>
+        <div class="psym o-sym" id="p2-sym">○ (O)</div>
+      </div>
+    </div>
+    <div class="status-msg" id="status-msg">תורו של ✕</div>
+    <div class="board-wrap"><div class="board" id="board"></div></div>
+    <div class="flex-row mt">
+      <button class="btn btn-secondary" onclick="restartGame()">🔄 שחק שוב</button>
+      <button class="btn btn-secondary" onclick="endGame()">🏠 בית</button>
+    </div>
+  </div>
+
+  <!-- VS PLAYER -->
+  <div id="screen-vsplayer" class="screen">
+    <div class="card">
+      <h2>🌐 משחק רשת</h2>
+      <div id="no-firebase-warn" class="warn-box" style="display:none;">
+        ⚠️ Firebase לא מוגדר – המשחק לא יעבוד בין מכשירים!
+        <button class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="openFbModal()">🔥 הגדר Firebase עכשיו</button>
+      </div>
+      <button class="btn btn-primary" onclick="createRoom()">➕ צור חדר חדש</button>
+      <div class="sep"></div>
+      <label>הזן קוד חדר להצטרף:</label>
+      <div class="flex-row">
+        <input type="text" id="join-code-input" placeholder="XXXXXX" maxlength="6" style="flex:1;margin-bottom:0;text-align:center;font-size:1.3rem;letter-spacing:6px;text-transform:uppercase;">
+        <button class="btn btn-accent btn-sm" onclick="joinRoom()" style="flex:0;">הצטרף</button>
+      </div>
+      <button class="btn btn-secondary mt" onclick="showScreen('home')">◀ חזרה</button>
+    </div>
+  </div>
+
+  <!-- ROOM WAITING -->
+  <div id="screen-room" class="screen">
+    <div class="card text-center">
+      <h2>⏳ ממתין ליריב...</h2>
+      <p class="small">שתף עם חברך:</p>
+      <div class="code-display" id="room-code-display">------</div>
+      <div id="qrcode"></div>
+      <p class="small mt">ממתין לחיבור <span class="waiting-dot"></span><span class="waiting-dot"></span><span class="waiting-dot"></span></p>
+      <button class="btn btn-secondary mt" onclick="cancelRoom()">❌ ביטול</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="screen-stats" class="screen">
+    <div class="card">
+      <h2>📊 הסטטיסטיקות שלי</h2>
+      <p class="small" style="margin-bottom:10px;">נגד מחשב:</p>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="num" id="st-ai-w">0</div><div class="lbl">ניצחונות</div></div>
+        <div class="stat-box"><div class="num" id="st-ai-l">0</div><div class="lbl">הפסדים</div></div>
+        <div class="stat-box"><div class="num" id="st-ai-d">0</div><div class="lbl">תיקו</div></div>
+      </div>
+      <div class="sep"></div>
+      <p class="small" style="margin-bottom:10px;">נגד שחקנים:</p>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="num" id="st-p-w">0</div><div class="lbl">ניצחונות</div></div>
+        <div class="stat-box"><div class="num" id="st-p-l">0</div><div class="lbl">הפסדים</div></div>
+        <div class="stat-box"><div class="num" id="st-p-d">0</div><div class="lbl">תיקו</div></div>
+      </div>
+      <div class="sep"></div>
+      <p class="small" style="margin-bottom:8px;">היסטוריית משחקים:</p>
+      <div id="history-list"><p class="small text-center">אין משחקים עדיין</p></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="screen-settings" class="screen">
+    <div class="card">
+      <h2>⚙️ הגדרות</h2>
+      <label>שם משתמש:</label>
+      <input type="text" id="set-username" placeholder="הכנס שמך..." maxlength="16">
+      <div class="toggle-row">
+        <span>אני מעדיף להתחיל ראשון</span>
+        <div class="toggle" id="toggle-prefer-start" onclick="togglePreferStart()"></div>
+      </div>
+      <div class="sep"></div>
+      <p style="font-size:.9rem;margin-bottom:10px;color:var(--accent);">🎮 בחר דמות Brawl Stars:</p>
+      <div class="chars-grid" id="chars-grid"></div>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 שמור</button>
+      <div class="sep"></div>
+      <button class="btn btn-secondary" onclick="openFbModal()">🔥 הגדרות Firebase (רב-משתתפים)</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<script>
+const BRAWLERS=[
+  {emoji:'🦊',name:'Shelly'},{emoji:'🔫',name:'Colt'},{emoji:'🐂',name:'Bull'},{emoji:'🚀',name:'Brock'},
+  {emoji:'🥊',name:'El Primo'},{emoji:'🍺',name:'Barley'},{emoji:'🎸',name:'Poco'},{emoji:'🌹',name:'Rosa'},
+  {emoji:'⚡',name:'Jessie'},{emoji:'💣',name:'Dynamike'},{emoji:'⏰',name:'Tick'},{emoji:'👾',name:'8-Bit'},
+  {emoji:'🎱',name:'Rico'},{emoji:'🤖',name:'Darryl'},{emoji:'🦜',name:'Penny'},{emoji:'🎀',name:'Piper'},
+];
+const AI_BRAWLERS=['🤖','👾','💀','🎯'];
+const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+let state={username:'שחקן',avatar:'🦊',preferStart:false,stats:{ai:{w:0,l:0,d:0},player:{w:0,l:0,d:0}},history:[]};
+let game={board:Array(9).fill(null),currentTurn:'X',playerSymbol:'X',aiSymbol:'O',vsAI:true,difficulty:'medium',over:false,p1Name:'',p2Name:'',p1Avatar:'',p2Avatar:'',localSymbol:'X'};
+let room={code:'',isHost:false,listener:null};
+let db=null;
+
+// ===== FIREBASE =====
+function openFbModal(){document.getElementById('fb-modal').style.display='flex';}
+
+function connectFirebase(){
+  var raw=document.getElementById('fb-config-input').value.trim();
+  var statusEl=document.getElementById('fb-status');
+  try{
+    if(typeof firebase==='undefined') throw new Error('ספריית Firebase לא נטענה. רענן את הדף ונסה שוב.');
+    var json=raw;
+    var m=raw.match(/\{[\s\S]*\}/);
+    if(m) json=m[0];
+    // Support JS-style unquoted keys (apiKey: vs "apiKey":)
+    json=json.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, function(m,p1,p2){return p1+'"'+p2+'":'; });
+    var cfg=JSON.parse(json);
+    if(!cfg.databaseURL) throw new Error('חסר databaseURL! ודא שיצרת Realtime Database תחת Build → Realtime Database.');
+    firebase.apps.slice().forEach(function(a){a.delete();});
+    firebase.initializeApp(cfg);
+    db=firebase.database();
+    db.ref('.info/connected').on('value',function(s){setConn(s.val());});
+    localStorage.setItem('xo_fb_cfg',JSON.stringify(cfg));
+    statusEl.className='fb-status ok';
+    statusEl.textContent='✅ Firebase מחובר בהצלחה!';
+    setTimeout(function(){document.getElementById('fb-modal').style.display='none';},1200);
+  }catch(e){
+    statusEl.className='fb-status err';
+    statusEl.textContent='❌ '+e.message;
+  }
+}
+
+function skipFirebase(){
+  document.getElementById('fb-modal').style.display='none';
+  setConn(false);
+  document.getElementById('no-firebase-warn').style.display='block';
+}
+
+function setConn(on){
+  const d=document.getElementById('conn-dot');
+  const l=document.getElementById('conn-label');
+  if(on===null){d.className='conn-dot yellow';l.textContent='מתחבר...';}
+  else if(on){d.className='conn-dot green';l.textContent='מחובר לרשת';}
+  else{d.className='conn-dot red';l.textContent='לא מחובר';}
+}
+
+function tryAutoConnect(){
+  const saved=localStorage.getItem('xo_fb_cfg');
+  if(!saved){openFbModal();return;}
+  try{
+    const cfg=JSON.parse(saved);
+    if(firebase.apps.length===0)firebase.initializeApp(cfg);
+    db=firebase.database();
+    setConn(null);
+    db.ref('.info/connected').on('value',s=>setConn(s.val()));
+    document.getElementById('fb-modal').style.display='none';
+  }catch(e){openFbModal();}
+}
+
+// ===== PERSISTENCE =====
+function loadState(){try{const s=localStorage.getItem('xo_st');if(s)state={...state,...JSON.parse(s)};}catch(e){}}
+function saveState(){localStorage.setItem('xo_st',JSON.stringify(state));}
+
+// ===== NAV =====
+function showScreen(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.screen===n));
+  if(n==='stats')renderStats();
+  if(n==='settings')renderSettings();
+  if(n==='home')renderHome();
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.screen)));
+
+// ===== HOME =====
+function renderHome(){
+  document.getElementById('home-username').textContent=state.username;
+  document.getElementById('home-avatar').textContent=state.avatar;
+  document.getElementById('qs-wins').textContent=(state.stats.ai.w||0)+(state.stats.player.w||0);
+  document.getElementById('qs-losses').textContent=(state.stats.ai.l||0)+(state.stats.player.l||0);
+  document.getElementById('qs-draws').textContent=(state.stats.ai.d||0)+(state.stats.player.d||0);
+}
+
+// ===== SETTINGS =====
+function renderSettings(){
+  document.getElementById('set-username').value=state.username;
+  document.getElementById('toggle-prefer-start').classList.toggle('on',state.preferStart);
+  const g=document.getElementById('chars-grid');g.innerHTML='';
+  BRAWLERS.forEach(b=>{
+    const btn=document.createElement('button');
+    btn.className='char-btn'+(state.avatar===b.emoji?' selected':'');
+    btn.innerHTML=b.emoji+'<span class="cname">'+b.name+'</span>';
+    btn.onclick=()=>{document.querySelectorAll('.char-btn').forEach(x=>x.classList.remove('selected'));btn.classList.add('selected');state.avatar=b.emoji;};
+    g.appendChild(btn);
+  });
+}
+function togglePreferStart(){state.preferStart=!state.preferStart;document.getElementById('toggle-prefer-start').classList.toggle('on',state.preferStart);}
+function saveSettings(){const u=document.getElementById('set-username').value.trim();if(u)state.username=u;saveState();showToast('✅ נשמר!');renderHome();}
+
+// ===== STATS =====
+function renderStats(){
+  ['w','l','d'].forEach(k=>{
+    document.getElementById('st-ai-'+k).textContent=state.stats.ai[k]||0;
+    document.getElementById('st-p-'+k).textContent=state.stats.player[k]||0;
+  });
+  const hl=document.getElementById('history-list');
+  if(!state.history.length){hl.innerHTML='<p class="small text-center">אין משחקים עדיין</p>';return;}
+  hl.innerHTML=state.history.slice(-20).reverse().map(h=>
+    '<div class="hist-item"><span class="res '+h.result+'">'+(h.result==='win'?'🏆':h.result==='lose'?'💀':'🤝')+'</span><div><div>'+h.vs+'</div><div class="small">'+(h.type==='ai'?'נגד מחשב':'נגד שחקן')+' · '+h.date+'</div></div></div>'
+  ).join('');
+}
+
+// ===== VS AI =====
+let currentDiff='medium';
+function setDiff(d){currentDiff=d;document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('active',b.dataset.diff===d));}
+function showVsAI(){showScreen('vsai');}
+function startAIGame(){
+  game.vsAI=true;game.difficulty=currentDiff;
+  const playerStarts=state.preferStart?true:Math.random()<.5;
+  game.playerSymbol=playerStarts?'X':'O';game.aiSymbol=playerStarts?'O':'X';
+  game.p1Name=state.username;game.p1Avatar=state.avatar;
+  game.p2Name='AI '+currentDiff;game.p2Avatar=AI_BRAWLERS[Math.floor(Math.random()*AI_BRAWLERS.length)];
+  initGameUI();showScreen('game');
+  if(game.currentTurn===game.aiSymbol)setTimeout(aiMove,600);
+}
+
+// ===== GAME =====
+function initGameUI(){
+  game.board=Array(9).fill(null);game.currentTurn='X';game.over=false;
+  const p1X=game.playerSymbol==='X';
+  document.getElementById('p1-avatar').textContent=p1X?game.p1Avatar:game.p2Avatar;
+  document.getElementById('p1-name').textContent=p1X?game.p1Name:game.p2Name;
+  document.getElementById('p1-sym').textContent='✕ (X)';document.getElementById('p1-sym').className='psym x-sym';
+  document.getElementById('p2-avatar').textContent=p1X?game.p2Avatar:game.p1Avatar;
+  document.getElementById('p2-name').textContent=p1X?game.p2Name:game.p1Name;
+  document.getElementById('p2-sym').textContent='○ (O)';document.getElementById('p2-sym').className='psym o-sym';
+  renderBoard();updateStatus();
+}
+
+function renderBoard(winLine){
+  const b=document.getElementById('board');b.innerHTML='';
+  game.board.forEach((v,i)=>{
+    const c=document.createElement('div');
+    let cls='cell'+(v?' taken '+v.toLowerCase():'');
+    if(winLine&&winLine.includes(i))cls+=' winner';
+    c.className=cls;
+    c.textContent=v==='X'?'✕':v==='O'?'○':'';
+    c.onclick=()=>handleClick(i);
+    b.appendChild(c);
+  });
+}
+
+function handleClick(i){
+  if(game.over||game.board[i])return;
+  if(game.vsAI&&game.currentTurn!==game.playerSymbol)return;
+  if(!game.vsAI&&game.currentTurn!==game.localSymbol){showToast('⏳ לא התור שלך!');return;}
+  game.board[i]=game.currentTurn;
+  if(!game.vsAI&&db&&room.code){
+    const next=game.currentTurn==='X'?'O':'X';
+    db.ref('rooms/'+room.code).update({board:game.board,turn:next});
+  }
+  const win=checkWin();
+  if(win){renderBoard(win);handleGameOver(win);return;}
+  if(game.board.every(Boolean)){renderBoard();handleDraw();return;}
+  game.currentTurn=game.currentTurn==='X'?'O':'X';
+  updateStatus();renderBoard();
+  if(game.vsAI&&game.currentTurn===game.aiSymbol)setTimeout(aiMove,400+Math.random()*300);
+}
+
+function checkWin(b){b=b||game.board;for(const[a,x,c]of WINS)if(b[a]&&b[a]===b[x]&&b[x]===b[c])return[a,x,c];return null;}
+
+function updateStatus(){
+  const n=game.currentTurn==='X'?(game.playerSymbol==='X'?game.p1Name:game.p2Name):(game.playerSymbol==='O'?game.p1Name:game.p2Name);
+  document.getElementById('status-msg').textContent='תור '+(game.currentTurn==='X'?'✕':'○')+' – '+n;
+  document.getElementById('p1-card').classList.toggle('active-turn',game.currentTurn==='X');
+  document.getElementById('p2-card').classList.toggle('active-turn',game.currentTurn==='O');
+}
+
+function handleGameOver(winLine){
+  game.over=true;
+  const myWin=game.vsAI?(game.currentTurn===game.playerSymbol):(game.currentTurn===game.localSymbol);
+  const wName=game.currentTurn==='X'?(game.playerSymbol==='X'?game.p1Name:game.p2Name):(game.playerSymbol==='O'?game.p1Name:game.p2Name);
+  document.getElementById('status-msg').textContent=myWin?'🏆 ניצחת! כל הכבוד '+state.username+'!':'😔 '+wName+' ניצח!';
+  const cat=game.vsAI?'ai':'player';
+  if(myWin){state.stats[cat].w=(state.stats[cat].w||0)+1;triggerConfetti();}
+  else state.stats[cat].l=(state.stats[cat].l||0)+1;
+  addHist(myWin?'win':'lose',game.vsAI?'AI '+game.difficulty:game.p2Name,cat);
+  if(!game.vsAI&&db&&room.code)db.ref('rooms/'+room.code).update({over:true,winner:game.currentTurn});
+  saveState();
+}
+
+function handleDraw(){
+  game.over=true;
+  document.getElementById('status-msg').textContent='🤝 תיקו!';
+  const cat=game.vsAI?'ai':'player';
+  state.stats[cat].d=(state.stats[cat].d||0)+1;
+  addHist('draw',game.vsAI?'AI':game.p2Name,cat);
+  if(!game.vsAI&&db&&room.code)db.ref('rooms/'+room.code).update({over:true,winner:'draw'});
+  saveState();
+}
+
+function addHist(result,vs,type){state.history.push({result,vs,type,date:new Date().toLocaleDateString('he-IL')});if(state.history.length>100)state.history=state.history.slice(-100);}
+function restartGame(){cleanupRoom();if(game.vsAI)startAIGame();else showScreen('vsplayer');}
+function endGame(){cleanupRoom();showScreen('home');renderHome();}
+
+// ===== AI =====
+function aiMove(){
+  if(game.over)return;
+  const move=getBestMove(game.difficulty);
+  game.board[move]=game.aiSymbol;
+  const win=checkWin();
+  if(win){renderBoard(win);handleGameOver(win);return;}
+  if(game.board.every(Boolean)){renderBoard();handleDraw();return;}
+  game.currentTurn=game.playerSymbol;updateStatus();renderBoard();
+}
+function getBestMove(d){
+  const emp=game.board.map((v,i)=>v?null:i).filter(x=>x!==null);
+  if(d==='easy'&&Math.random()<.7)return emp[Math.floor(Math.random()*emp.length)];
+  if(d==='medium'&&Math.random()<.4)return emp[Math.floor(Math.random()*emp.length)];
+  return minimax([...game.board],game.aiSymbol,game.aiSymbol,game.playerSymbol).idx;
+}
+function minimax(board,sym,ai,pl,depth=0){
+  const wl=checkWin(board);
+  if(wl)return{score:board[wl[0]]===ai?10-depth:depth-10};
+  const emp=board.map((v,i)=>v?null:i).filter(x=>x!==null);
+  if(!emp.length)return{score:0};
+  const moves=emp.map(i=>{const nb=[...board];nb[i]=sym;return{idx:i,score:minimax(nb,sym===ai?pl:ai,ai,pl,depth+1).score};});
+  return sym===ai?moves.reduce((a,b)=>b.score>a.score?b:a):moves.reduce((a,b)=>b.score<a.score?b:a);
+}
+
+// ===== MULTIPLAYER =====
+function showVsPlayer(){
+  document.getElementById('no-firebase-warn').style.display=db?'none':'block';
+  showScreen('vsplayer');
+}
+
+function genCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+
+async function createRoom(){
+  if(!db){showToast('⚠️ Firebase לא מוגדר');openFbModal();return;}
+  room.code=genCode();room.isHost=true;
+  await db.ref('rooms/'+room.code).set({
+    host:state.username,hostAvatar:state.avatar,hostPrefer:state.preferStart,
+    guest:null,guestAvatar:null,guestPrefer:null,
+    board:Array(9).fill(null),turn:null,hostSym:null,guestSym:null,over:false,winner:null,ts:Date.now()
+  });
+  showScreen('room');
+  document.getElementById('room-code-display').textContent=room.code;
+  generateQR(room.code);
+  // Listen for guest
+  room.listener=db.ref('rooms/'+room.code).on('value',snap=>{
+    const rd=snap&&snap.val();
+    if(rd&&rd.guest&&!game.p2Name){
+      db.ref('rooms/'+room.code).off('value',room.listener);
+      room.listener=null;
+      startMulti(rd,true);
+    }
+  });
+}
+
+async function joinRoom(){
+  if(!db){showToast('⚠️ Firebase לא מוגדר');openFbModal();return;}
+  const code=document.getElementById('join-code-input').value.trim().toUpperCase();
+  if(code.length!==6){showToast('קוד חייב להיות 6 תווים');return;}
+  const snap=await db.ref('rooms/'+code).get();
+  if(!snap.exists()){showToast('❌ חדר לא נמצא!');return;}
+  const rd=snap.val();
+  if(rd.guest){showToast('❌ החדר כבר מלא!');return;}
+  room.code=code;room.isHost=false;
+  // Decide symbols
+  let hostStarts;
+  if(rd.hostPrefer&&!state.preferStart)hostStarts=true;
+  else if(!rd.hostPrefer&&state.preferStart)hostStarts=false;
+  else hostStarts=Math.random()<.5;
+  const hostSym=hostStarts?'X':'O',guestSym=hostStarts?'O':'X';
+  await db.ref('rooms/'+code).update({
+    guest:state.username,guestAvatar:state.avatar,guestPrefer:state.preferStart,
+    hostSym,guestSym,turn:'X',board:Array(9).fill(null),over:false,winner:null
+  });
+  const snap2=await db.ref('rooms/'+code).get();
+  startMulti(snap2.val(),false);
+}
+
+function startMulti(rd,isHost){
+  if(room.listener&&db&&room.code){db.ref('rooms/'+room.code).off('value',room.listener);room.listener=null;}
+  game.vsAI=false;game.over=false;
+  game.board=rd.board||Array(9).fill(null);
+  game.currentTurn=rd.turn||'X';
+  game.localSymbol=isHost?(rd.hostSym||'X'):(rd.guestSym||'O');
+  game.playerSymbol=game.localSymbol;
+  game.aiSymbol=game.localSymbol==='X'?'O':'X';
+  game.p1Name=state.username;game.p1Avatar=state.avatar;
+  game.p2Name=isHost?(rd.guest||'יריב'):(rd.host||'מארח');
+  game.p2Avatar=isHost?(rd.guestAvatar||'👤'):(rd.hostAvatar||'👤');
+  initGameUI();showScreen('game');
+  // Live sync
+  room.listener=db.ref('rooms/'+room.code).on('value',snap=>{
+    if(!snap||game.over)return;
+    const rd2=snap.val();if(!rd2)return;
+    const oldBoard=[...game.board];
+    const newBoard=rd2.board||game.board;
+    const changed=oldBoard.some((v,i)=>v!==newBoard[i]);
+    if(changed){
+      game.board=newBoard;game.currentTurn=rd2.turn||game.currentTurn;
+      const win=checkWin();
+      if(win){renderBoard(win);handleGameOver(win);}
+      else if(game.board.every(Boolean)){renderBoard();handleDraw();}
+      else{updateStatus();renderBoard();}
+    }
+  });
+}
+
+function cleanupRoom(){
+  if(room.listener&&db&&room.code){db.ref('rooms/'+room.code).off('value',room.listener);room.listener=null;}
+}
+function cancelRoom(){
+  cleanupRoom();
+  if(db&&room.code)db.ref('rooms/'+room.code).remove();
+  room.code='';room.isHost=false;game.p2Name='';
+  showScreen('home');
+}
+
+function generateQR(code){
+  const el=document.getElementById('qrcode');el.innerHTML='';
+  const url=window.location.href.split('?')[0]+'?join='+code;
+  try{new QRCode(el,{text:url,width:140,height:140,colorDark:'#f59e0b',colorLight:'#1e1b4b'});}
+  catch(e){el.textContent=url;}
+}
+
+function checkUrlJoin(){
+  const p=new URLSearchParams(window.location.search);
+  const c=p.get('join');
+  if(c){history.replaceState({},'',window.location.pathname);showScreen('vsplayer');document.getElementById('join-code-input').value=c.toUpperCase();setTimeout(joinRoom,900);}
+}
+
+// ===== EFFECTS =====
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function triggerConfetti(){
+  const w=document.getElementById('confetti-wrap');w.innerHTML='';
+  const colors=['#f59e0b','#ec4899','#38bdf8','#4ade80','#a78bfa','#f43f5e'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');el.className='conf';
+    el.style.cssText='left:'+Math.random()*100+'vw;background:'+colors[Math.floor(Math.random()*colors.length)]+';width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-delay:'+Math.random()*1.5+'s;animation-duration:'+(2+Math.random()*1.5)+'s;';
+    w.appendChild(el);
+  }
+  setTimeout(()=>{w.innerHTML='';},4000);
+}
+
+// ===== INIT =====
+loadState();renderHome();renderSettings();
+tryAutoConnect();
+checkUrlJoin();
+</script>
+</body>
+</html>
