@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XO Brawl</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1a0a00;--card:#2d1810;--card2:#3d2218;
+  --accent:#FFD700;--accent2:#FF6B00;--accent3:#FF3366;
+  --xc:#FF3366;--oc:#00CFFF;--win:#7FFF00;
+  --text:#FFF8DC;--sub:#D4A96A;--border:#8B4513;
+  --desert:#C4752A;--sky:#87CEEB;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:
+    radial-gradient(ellipse at 50% 0%, #87CEEB 0%, #E8A857 35%, #C4752A 60%, #8B3A00 100%);
+  min-height:100vh;color:var(--text);
+  position:relative;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 80%,rgba(139,58,0,.8) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(139,58,0,.8) 0%,transparent 50%),
+    linear-gradient(180deg, transparent 40%, rgba(26,10,0,.7) 100%);
+  pointer-events:none;z-index:0;
+}
+#app{max-width:460px;margin:0 auto;padding:14px;position:relative;z-index:1;}
+/* BRAWL STARS TITLE */
+.bs-title{
+  text-align:center;padding:10px 0 0;position:relative;
+}
+.bs-title h1{
+  font-family:'Lilita One',cursive;
+  font-size:2.4rem;
+  color:#FFD700;
+  text-shadow:
+    3px 3px 0 #8B4500,
+    -2px -2px 0 #8B4500,
+    2px -2px 0 #8B4500,
+    -2px 2px 0 #8B4500,
+    0 4px 0 #5C2E00,
+    0 0 20px rgba(255,165,0,.6);
+  letter-spacing:2px;
+  animation:titlePulse 3s ease infinite;
+}
+.bs-title h1 span{color:#FF6B00;}
+@keyframes titlePulse{0%,100%{text-shadow:3px 3px 0 #8B4500,-2px -2px 0 #8B4500,2px -2px 0 #8B4500,-2px 2px 0 #8B4500,0 4px 0 #5C2E00,0 0 20px rgba(255,165,0,.6);}50%{text-shadow:3px 3px 0 #8B4500,-2px -2px 0 #8B4500,2px -2px 0 #8B4500,-2px 2px 0 #8B4500,0 4px 0 #5C2E00,0 0 40px rgba(255,165,0,.9),0 0 60px rgba(255,100,0,.4);}}
+.bs-stars{font-size:1.1rem;display:flex;justify-content:center;gap:6px;margin-top:2px;}
+.sub{text-align:center;font-size:.78rem;color:var(--sub);margin-bottom:10px;}
+.conn{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle;}
+.conn.g{background:var(--win);}.conn.r{background:var(--xc);}.conn.y{background:var(--accent);animation:bl 1s infinite;}
+@keyframes bl{0%,100%{opacity:.3}50%{opacity:1}}
+.nav{display:flex;justify-content:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.nb{
+  background:linear-gradient(180deg,#5C3010,#3D1E08);
+  border:2px solid #8B5520;
+  color:var(--accent);padding:7px 14px;border-radius:20px;
+  cursor:pointer;font-size:.8rem;font-weight:800;
+  transition:all .2s;font-family:'Nunito',sans-serif;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+  box-shadow:0 2px 0 #2A1005,0 4px 8px rgba(0,0,0,.3);
+}
+.nb.on,.nb:hover{
+  background:linear-gradient(180deg,#FF8C00,#FF4500);
+  border-color:#FFD700;color:#fff;
+  box-shadow:0 2px 0 #8B3A00,0 4px 15px rgba(255,140,0,.5);
+  transform:translateY(-1px);
+}
+.sc{display:none;}.sc.on{display:block;animation:fi .25s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{
+  background:linear-gradient(180deg,rgba(61,34,24,.95),rgba(26,10,0,.98));
+  border:2px solid #8B5520;
+  border-radius:18px;padding:16px;margin-bottom:12px;
+  box-shadow:0 4px 0 #5C2E00,0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,200,100,.1);
+}
+.card h2{
+  color:var(--accent);font-size:1rem;margin-bottom:12px;
+  font-family:'Lilita One',cursive;
+  text-shadow:1px 1px 0 #8B4500;
+}
+.btn{display:block;width:100%;padding:11px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:800;margin-bottom:9px;transition:all .2s;font-family:'Nunito',sans-serif;}
+.bp{
+  background:linear-gradient(180deg,#9B4DCA,#6B21A8);
+  color:#fff;border:2px solid #C084FC;
+  box-shadow:0 3px 0 #4C1D95,0 6px 16px rgba(107,33,168,.4);
+  text-shadow:0 1px 2px rgba(0,0,0,.4);
+}
+.bp:hover{transform:translateY(-2px);box-shadow:0 5px 0 #4C1D95,0 8px 20px rgba(107,33,168,.5);}
+.bs{
+  background:linear-gradient(180deg,#5C3010,#3D1E08);
+  color:var(--text);border:2px solid #8B5520;
+  box-shadow:0 3px 0 #2A1005;
+}
+.bs:hover{transform:translateY(-1px);}
+.ba{
+  background:linear-gradient(180deg,#FFD700,#FF8C00);
+  color:#3D1E08;border:2px solid #FFE55C;
+  box-shadow:0 3px 0 #8B6000,0 6px 16px rgba(255,165,0,.4);
+  font-weight:900;
+}
+.ba:hover{transform:translateY(-2px);}
+.bsm{display:inline-block;width:auto;padding:7px 14px;font-size:.8rem;margin-bottom:0;}
+.row{display:flex;gap:8px;}.row .btn{flex:1;}
+.sep{height:2px;background:linear-gradient(90deg,transparent,#8B5520,transparent);margin:10px 0;}
+label{font-size:.8rem;color:var(--sub);display:block;margin-bottom:3px;font-weight:700;}
+input{
+  width:100%;padding:9px 12px;border-radius:9px;
+  background:rgba(0,0,0,.4);border:2px solid #8B5520;
+  color:var(--text);font-size:.9rem;margin-bottom:9px;
+  outline:none;font-family:'Nunito',sans-serif;font-weight:700;
+}
+input:focus{border-color:var(--accent);}
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.tog{width:42px;height:22px;background:rgba(0,0,0,.4);border-radius:11px;border:2px solid #8B5520;position:relative;cursor:pointer;}
+.tog.on{background:linear-gradient(135deg,#FF8C00,#FF4500);}
+.tog::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:1px;left:2px;transition:left .2s;}
+.tog.on::after{left:22px;}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.sbox{
+  background:rgba(0,0,0,.4);border-radius:12px;padding:10px;
+  text-align:center;border:2px solid #8B5520;
+  box-shadow:inset 0 1px 0 rgba(255,200,100,.05);
+}
+.sbox .n{font-size:1.7rem;font-weight:900;color:var(--accent);font-family:'Lilita One',cursive;}
+.sbox .l{font-size:.65rem;color:var(--sub);font-weight:700;}
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:9px;}
+.cbtn{
+  padding:4px 2px 6px;border-radius:10px;
+  border:2px solid #8B5520;background:rgba(0,0,0,.4);
+  cursor:pointer;text-align:center;overflow:hidden;
+  transition:all .2s;
+}
+.cbtn img{width:52px;height:52px;object-fit:contain;display:block;margin:0 auto;}
+.cbtn span{font-size:.52rem;color:var(--sub);display:block;font-weight:700;margin-top:2px;}
+.cbtn.sel{border-color:var(--accent);background:rgba(255,165,0,.15);box-shadow:0 0 8px rgba(255,165,0,.4);}
+.cbtn:hover{border-color:var(--accent2);transform:scale(1.05);}
+.diff-row{display:flex;gap:7px;margin-bottom:12px;}
+.db{
+  flex:1;padding:9px;border:2px solid #8B5520;
+  background:rgba(0,0,0,.4);color:var(--text);
+  border-radius:10px;cursor:pointer;font-size:.82rem;
+  font-weight:800;font-family:'Nunito',sans-serif;
+}
+.db.on{border-color:var(--accent);color:var(--accent);background:rgba(255,165,0,.1);}
+/* BOARD */
+.pbar{display:flex;gap:10px;margin-bottom:10px;}
+.pc{
+  flex:1;padding:9px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(61,34,24,.9),rgba(26,10,0,.9));
+  border:2px solid #8B5520;text-align:center;transition:all .25s;
+  box-shadow:0 2px 0 #5C2E00;
+}
+.pc.act{
+  border-color:var(--accent);
+  background:linear-gradient(180deg,rgba(139,85,0,.4),rgba(100,50,0,.5));
+  box-shadow:0 0 12px rgba(255,165,0,.4),0 2px 0 #8B6000;
+}
+.pc .av{width:50px;height:50px;object-fit:contain;display:block;margin:0 auto;}
+.pc .av-emoji{font-size:2rem;line-height:1;}
+.pc .nm{font-size:.72rem;font-weight:800;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.pc .sy{font-size:.65rem;font-weight:700;}
+.pc .sy.xs{color:var(--xc);}.pc .sy.os{color:var(--oc);}
+.smsg{
+  text-align:center;padding:9px;border-radius:10px;
+  background:linear-gradient(180deg,rgba(61,34,24,.9),rgba(26,10,0,.9));
+  border:2px solid #8B5520;
+  font-weight:800;font-size:.95rem;margin-bottom:10px;min-height:40px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Lilita One',cursive;color:var(--accent);
+  text-shadow:1px 1px 0 #8B4500;
+}
+.board{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;
+  background:rgba(0,0,0,.3);border-radius:16px;
+  border:2px solid #8B5520;
+}
+.cell{
+  width:83px;height:83px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,rgba(61,34,24,.8),rgba(26,10,0,.9));
+  border:2px solid #8B5520;border-radius:12px;cursor:pointer;
+  transition:all .18s;user-select:none;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,200,100,.05);
+}
+.cell:hover:not(.tk){
+  background:linear-gradient(180deg,rgba(100,50,0,.8),rgba(60,20,0,.9));
+  border-color:var(--accent);transform:scale(1.04);
+  box-shadow:0 0 10px rgba(255,165,0,.3);
+}
+.cell img{width:70px;height:70px;object-fit:contain;animation:popIn .2s ease;}
+@keyframes popIn{from{transform:scale(0) rotate(-10deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.cell.x{border-color:var(--xc);background:linear-gradient(180deg,rgba(100,10,30,.7),rgba(60,0,20,.8));}
+.cell.o{border-color:var(--oc);background:linear-gradient(180deg,rgba(0,50,100,.7),rgba(0,30,70,.8));}
+.cell.tk{cursor:default;}
+.cell.win{
+  border-color:var(--win);
+  background:linear-gradient(180deg,rgba(30,100,0,.7),rgba(10,60,0,.8));
+  animation:pu .6s ease infinite alternate;
+}
+@keyframes pu{from{box-shadow:0 0 8px rgba(127,255,0,.5)}to{box-shadow:0 0 20px rgba(127,255,0,.9),inset 0 0 10px rgba(127,255,0,.2)}}
+/* ROOM */
+.code{
+  font-size:2rem;font-weight:900;letter-spacing:8px;text-align:center;
+  color:var(--accent);
+  background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.7));
+  border-radius:12px;padding:14px;
+  border:3px dashed var(--accent);margin:9px 0;
+  font-family:'Lilita One',cursive;
+  text-shadow:2px 2px 0 #8B4500;
+  box-shadow:inset 0 0 20px rgba(255,165,0,.1);
+}
+#qrc{display:flex;justify-content:center;margin:9px 0;}
+.wd{display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;margin:0 2px;animation:bl 1s infinite;}
+.wd:nth-child(2){animation-delay:.2s;}.wd:nth-child(3){animation-delay:.4s;}
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#FF8C00,#FF4500);color:#fff;padding:10px 22px;border-radius:22px;font-weight:800;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;border:2px solid #FFD700;box-shadow:0 3px 0 #8B3A00,0 6px 20px rgba(255,100,0,.5);font-family:'Nunito',sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.3);}
+#toast.sh{opacity:1;}
+/* CONFETTI */
+#cfw{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;}
+/* QR Scanner */
+#qr-scanner-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:8000;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+#qr-scanner-wrap.on{display:flex;}
+#qr-video{width:260px;height:260px;object-fit:cover;border-radius:16px;border:3px solid var(--accent);}
+#qr-canvas{display:none;}
+.qr-frame{position:relative;margin-bottom:14px;}
+.qr-line{position:absolute;top:50%;left:10%;width:80%;height:2px;background:var(--accent);animation:scan 2s linear infinite;}
+@keyframes scan{0%{top:10%}50%{top:90%}100%{top:10%}}
+#qr-status{color:var(--accent);font-size:.9rem;margin-bottom:12px;font-weight:700;text-align:center;}
+/* Rematch */
+#rematch-banner{display:none;background:rgba(245,158,11,.12);border:1px solid var(--accent);border-radius:12px;padding:12px;margin-bottom:10px;text-align:center;font-size:.85rem;}
+#rematch-banner.on{display:block;}
+.cf{position:absolute;animation:cf 2.5s ease-in forwards;}
+@keyframes cf{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.hi{font-size:.75rem;color:var(--sub);}
+.hitem{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:var(--card2);margin-bottom:5px;font-size:.78rem;}
+.hr{font-weight:900;font-size:.95rem;}
+.hr.win{color:var(--win);}.hr.lose{color:var(--xc);}.hr.draw{color:var(--sub);}
+.warn{background:rgba(244,63,94,.1);border:1px solid var(--xc);border-radius:10px;padding:10px;margin-bottom:10px;font-size:.8rem;color:var(--xc);}
+</style>
+</head>
+<body>
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="
+  position:fixed;inset:0;z-index:5000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#87CEEB 0%,#E8A857 40%,#C4752A 70%,#8B3A00 100%);
+  padding:20px;
+">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-family:'Lilita One',cursive;font-size:3rem;color:#FFD700;
+      text-shadow:3px 3px 0 #8B4500,-2px -2px 0 #8B4500,2px -2px 0 #8B4500,-2px 2px 0 #8B4500,0 5px 0 #5C2E00,0 0 30px rgba(255,165,0,.7);
+      animation:titlePulse 3s ease infinite;letter-spacing:2px;">
+      XO <span style="color:#FF6B00;">Brawl</span>
+    </div>
+    <div style="font-family:'Nunito',sans-serif;font-size:.9rem;color:#FFF8DC;margin-top:4px;font-weight:700;text-shadow:1px 1px 2px rgba(0,0,0,.5);">
+      ⭐ איקס עיגול Brawl Stars ⭐
+    </div>
+  </div>
+  <!-- Brawlers preview -->
+  <div style="display:flex;gap:8px;margin-bottom:24px;justify-content:center;flex-wrap:wrap;">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000000.png" style="width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.textContent='🦊';this.style.fontSize='2rem'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000006.png" style="width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000009.png" style="width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000011.png" style="width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000015.png" style="width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+  </div>
+  <div style="
+    background:linear-gradient(180deg,rgba(61,34,24,.97),rgba(26,10,0,.98));
+    border:2px solid #8B5520;border-radius:20px;padding:22px;width:100%;max-width:340px;
+    box-shadow:0 4px 0 #5C2E00,0 8px 30px rgba(0,0,0,.6);
+  ">
+    <p style="text-align:center;font-family:'Nunito',sans-serif;font-weight:800;color:var(--accent);margin-bottom:16px;font-size:1.05rem;">
+      🎮 בחר איך להיכנס
+    </p>
+    <!-- Google login -->
+    <button id="google-login-btn" onclick="signInGoogle()" style="
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      width:100%;padding:12px;border-radius:12px;border:none;cursor:pointer;
+      background:#fff;color:#3c4043;font-size:.95rem;font-weight:700;
+      box-shadow:0 3px 0 #ccc,0 5px 12px rgba(0,0,0,.3);
+      margin-bottom:12px;transition:all .2s;font-family:'Nunito',sans-serif;
+    ">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      כניסה עם Google
+    </button>
+    <!-- Guest login -->
+    <div style="position:relative;text-align:center;margin-bottom:12px;">
+      <div style="height:1px;background:linear-gradient(90deg,transparent,#8B5520,transparent);"></div>
+      <span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#2d1810;padding:0 10px;font-size:.75rem;color:var(--sub);font-weight:700;">או</span>
+    </div>
+    <input id="guest-name-input" placeholder="הכנס שם משתמש..." maxlength="16" style="margin-bottom:10px;text-align:center;font-size:1rem;letter-spacing:.5px;">
+    <button onclick="signInGuest()" style="
+      display:block;width:100%;padding:11px;border-radius:12px;border:none;cursor:pointer;
+      background:linear-gradient(180deg,#FFD700,#FF8C00);
+      color:#3D1E08;font-size:.95rem;font-weight:900;
+      box-shadow:0 3px 0 #8B6000,0 5px 12px rgba(255,140,0,.4);
+      font-family:'Nunito',sans-serif;transition:all .2s;
+    ">
+      🎮 כניסה כאורח
+    </button>
+  </div>
+</div>
+
+<div id="app">
+<div class="bs-title">
+  <h1>XO <span>Brawl</span></h1>
+  <div class="bs-stars">⭐ <span style="font-size:.75rem;font-weight:800;color:var(--sub);">Brawl Stars Edition</span> ⭐</div>
+</div>
+<p class="sub"><span class="conn r" id="cdot"></span><span id="clbl">מתחבר...</span></p>
+<div class="nav">
+  <button class="nb on" data-s="home">🏠 בית</button>
+  <button class="nb" data-s="stats">📊 סטטס</button>
+  <button class="nb" data-s="settings">⚙️ הגדרות</button>
+</div>
+
+<!-- HOME -->
+<div id="sc-home" class="sc on">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div id="h-av-wrap" style="flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Lilita One',cursive;font-size:1.1rem;color:var(--accent);text-shadow:1px 1px 0 #8B4500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="h-user">שחקן</div>
+        <div id="h-google-badge" style="font-size:.65rem;color:var(--sub);font-weight:700;display:none;">✅ מחובר עם Google</div>
+      </div>
+      <button onclick="signOut()" style="background:none;border:1px solid #8B5520;border-radius:8px;color:var(--sub);padding:4px 8px;cursor:pointer;font-size:.65rem;font-weight:700;white-space:nowrap;">יציאה</button>
+    </div>
+    <div class="sgrid" style="margin-bottom:12px;">
+      <div class="sbox"><div class="n" id="hw">0</div><div class="l">ניצחונות</div></div>
+      <div class="sbox"><div class="n" id="hl">0</div><div class="l">הפסדים</div></div>
+      <div class="sbox"><div class="n" id="hd">0</div><div class="l">תיקו</div></div>
+    </div>
+    <button class="btn bp" onclick="goAI()">🤖 נגד מחשב</button>
+    <button class="btn ba" onclick="goMP()">🌐 משחק רשת עם חבר</button>
+  </div>
+</div>
+
+<!-- VS AI -->
+<div id="sc-vsai" class="sc">
+  <div class="card">
+    <h2>🤖 נגד המחשב</h2>
+    <div class="diff-row">
+      <button class="db on" data-d="easy" onclick="setD('easy')">😊 קל</button>
+      <button class="db" data-d="medium" onclick="setD('medium')">😤 בינוני</button>
+      <button class="db" data-d="hard" onclick="setD('hard')">💀 קשה</button>
+    </div>
+    <button class="btn bp" onclick="startAI()">▶ התחל!</button>
+    <button class="btn bs" onclick="go('home')">◀ חזרה</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="sc-game" class="sc">
+  <div class="pbar">
+    <div class="pc" id="pc1">
+      <div class="av" id="g-av1">❓</div>
+      <div class="nm" id="g-nm1">שחקן 1</div>
+      <div class="sy xs" id="g-sy1">✕ (X)</div>
+    </div>
+    <div style="display:flex;align-items:center;color:var(--sub);font-size:1.1rem;">VS</div>
+    <div class="pc" id="pc2">
+      <div class="av" id="g-av2">🤖</div>
+      <div class="nm" id="g-nm2">מחשב</div>
+      <div class="sy os" id="g-sy2">○ (O)</div>
+    </div>
+  </div>
+  <div id="rematch-banner">
+    <div id="rematch-msg">⏳ ממתין ליריב לאשר שחק שוב...</div>
+    <button class="btn ba bsm" id="rematch-btn" onclick="requestRematch()" style="margin-top:6px;">🔄 שחק שוב עם אותו יריב</button>
+  </div>
+  <div class="smsg" id="gmsg">תורך!</div>
+  <div class="board" id="board"></div>
+  <div class="row" style="margin-top:10px;">
+    <button class="btn bs" onclick="restartG()">🔄 שחק שוב</button>
+    <button class="btn bs" onclick="endG()">🏠 בית</button>
+  </div>
+</div>
+
+<!-- MULTIPLAYER -->
+<div id="sc-mp" class="sc">
+  <div class="card">
+    <h2>🌐 משחק רשת</h2>
+    <div id="mpwarn" class="warn" style="display:none;">⚠️ לא מחובר לרשת</div>
+    <button class="btn bp" onclick="createRoom()">➕ צור חדר חדש</button>
+    <div class="sep"></div>
+    <label>הזן קוד להצטרפות:</label>
+    <div class="row">
+      <input id="jcode" placeholder="XXXXXX" maxlength="6" style="flex:1;margin-bottom:0;text-align:center;font-size:1.2rem;letter-spacing:5px;text-transform:uppercase;">
+      <button class="btn ba bsm" onclick="joinRoom()" style="flex:0;">הצטרף</button>
+    </div>
+    <button class="btn bs" style="margin-bottom:0;" onclick="startQRScan()">📷 סרוק QR קוד</button>
+    <button class="btn bs" style="margin-top:8px;" onclick="go('home')">◀ חזרה</button>
+  </div>
+</div>
+
+<!-- WAITING ROOM -->
+<div id="sc-room" class="sc">
+  <div class="card" style="text-align:center;">
+    <h2>⏳ ממתין ליריב...</h2>
+    <p class="hi">שתף את הקוד עם חברך:</p>
+    <div class="code" id="rcode">------</div>
+    <div id="qrc"></div>
+    <p class="hi" style="margin-top:8px;">ממתין <span class="wd"></span><span class="wd"></span><span class="wd"></span></p>
+    <button class="btn bs" style="margin-top:10px;" onclick="cancelRoom()">❌ ביטול</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="sc-stats" class="sc">
+  <div class="card">
+    <h2>📊 סטטיסטיקות</h2>
+    <p class="hi" style="margin-bottom:8px;">נגד מחשב:</p>
+    <div class="sgrid">
+      <div class="sbox"><div class="n" id="saiw">0</div><div class="l">ניצחונות</div></div>
+      <div class="sbox"><div class="n" id="sail">0</div><div class="l">הפסדים</div></div>
+      <div class="sbox"><div class="n" id="said">0</div><div class="l">תיקו</div></div>
+    </div>
+    <div class="sep"></div>
+    <p class="hi" style="margin-bottom:8px;">נגד שחקנים:</p>
+    <div class="sgrid">
+      <div class="sbox"><div class="n" id="spw">0</div><div class="l">ניצחונות</div></div>
+      <div class="sbox"><div class="n" id="spl">0</div><div class="l">הפסדים</div></div>
+      <div class="sbox"><div class="n" id="spd">0</div><div class="l">תיקו</div></div>
+    </div>
+    <div class="sep"></div>
+    <div id="hlist"><p class="hi" style="text-align:center;">אין משחקים</p></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="sc-settings" class="sc">
+  <div class="card">
+    <h2>⚙️ הגדרות</h2>
+    <label>שם משתמש:</label>
+    <input id="sname" maxlength="16" placeholder="הכנס שמך...">
+    <div class="tog-row">
+      <span style="font-size:.88rem;">מעדיף להתחיל ראשון</span>
+      <div class="tog" id="togps" onclick="togglePS()"></div>
+    </div>
+    <div class="sep"></div>
+    <p style="font-size:.85rem;color:var(--accent);margin-bottom:8px;">🎮 בחר דמות Brawl Stars:</p>
+    <div class="cgrid" id="cgrid"></div>
+    <button class="btn bp" onclick="saveS()">💾 שמור</button>
+  </div>
+</div>
+
+<!-- QR SCANNER OVERLAY -->
+<div id="qr-scanner-wrap">
+  <p style="color:var(--accent);font-weight:900;font-size:1.1rem;margin-bottom:12px;">📷 סרוק QR של החבר</p>
+  <div class="qr-frame">
+    <video id="qr-video" autoplay playsinline muted></video>
+    <div class="qr-line"></div>
+  </div>
+  <canvas id="qr-canvas"></canvas>
+  <div id="qr-status">מכוון את המצלמה לקוד QR...</div>
+  <button class="btn bs" style="width:auto;padding:10px 24px;" onclick="stopQRScan()">❌ ביטול</button>
+</div>
+</div><!-- /app -->
+<div id="toast"></div>
+<div id="cfw"></div>
+
+<script>
+// ================================================================
+// FIREBASE CONFIG - מוטמע קבוע
+// ================================================================
+var FB_CFG = {
+  apiKey: "AIzaSyCSQxExv7G1SUr1gVMdeKVe2SsL3alcpDQ",
+  authDomain: "xo-brawl.firebaseapp.com",
+  databaseURL: "https://xo-brawl-default-rtdb.firebaseio.com",
+  projectId: "xo-brawl",
+  storageBucket: "xo-brawl.firebasestorage.app",
+  messagingSenderId: "1004866367649",
+  appId: "1:1004866367649:web:952fd958d564e7a7f2c0e0"
+};
+
+var db = null;
+
+var auth = null;
+
+function initFB() {
+  try {
+    if (typeof firebase === 'undefined') {
+      setConn(false);
+      showLoginScreen(); // show login even without firebase
+      return;
+    }
+    if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
+    db = firebase.database();
+    auth = firebase.auth();
+    db.ref('.info/connected').on('value', function(s) { setConn(!!s.val()); });
+    checkPersistedLogin();
+  } catch(e) {
+    setConn(false);
+    console.error('Firebase init error:', e);
+    showLoginScreen();
+  }
+}
+
+function checkPersistedLogin(){
+  // 1. Try localStorage first (instant, no network needed)
+  var saved = localStorage.getItem('xo_profile');
+  if(saved){
+    try{
+      var p = JSON.parse(saved);
+      if(p && p.name){
+        S.name = p.name;
+        S.av = p.av || S.av;
+        if(p.stats && p.stats.ai) S.ai = p.stats.ai;
+        if(p.stats && p.stats.pl) S.pl = p.stats.pl;
+        if(p.stats && p.stats.hist) S.hist = p.stats.hist;
+        hideLoinScreen();
+        renderHome();
+        renderSettings();
+        return; // logged in from cache
+      }
+    }catch(e){ localStorage.removeItem('xo_profile'); }
+  }
+  // 2. Check Firebase Auth state
+  if(auth){
+    // Timeout fallback - if auth takes too long, show login
+    var authTimeout = setTimeout(function(){ showLoginScreen(); }, 4000);
+    auth.onAuthStateChanged(function(user){
+      clearTimeout(authTimeout);
+      if(user){
+        S.name = user.displayName || user.email.split('@')[0];
+        S.googlePhoto = user.photoURL || null;
+        S.uid = user.uid;
+        db.ref('users/'+user.uid).get().then(function(snap){
+          if(snap && snap.exists()){
+            var d=snap.val();
+            if(d.av) S.av=d.av;
+            if(d.ai) S.ai=d.ai;
+            if(d.pl) S.pl=d.pl;
+            if(d.hist) S.hist=d.hist;
+          }
+          persistProfile();
+          hideLoinScreen();
+          renderHome();
+          renderSettings();
+        }).catch(function(){ hideLoinScreen(); renderHome(); renderSettings(); });
+      } else {
+        showLoginScreen();
+      }
+    });
+  } else {
+    showLoginScreen();
+  }
+}
+
+function showLoginScreen(){
+  document.getElementById('login-screen').style.display='flex';
+}
+function hideLoinScreen(){
+  document.getElementById('login-screen').style.display='none';
+}
+
+function signInGoogle(){
+  if(!auth){toast('❌ Firebase Auth לא זמין');return;}
+  var btn=document.getElementById('google-login-btn');
+  btn.textContent='⏳ מתחבר...'; btn.disabled=true;
+  var provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({prompt:'select_account'});
+  auth.signInWithPopup(provider)
+    .then(function(result){
+      var user=result.user;
+      S.name=user.displayName||user.email.split('@')[0];
+      S.googlePhoto=user.photoURL;
+      S.uid=user.uid;
+      // Load existing stats
+      return db.ref('users/'+user.uid).get().then(function(snap){
+        if(snap.exists()){
+          var d=snap.val();
+          if(d.av) S.av=d.av;
+          if(d.ai) S.ai=d.ai;
+          if(d.pl) S.pl=d.pl;
+          if(d.hist) S.hist=d.hist;
+        }
+        persistProfile();
+        hideLoinScreen();
+        renderHome();
+      });
+    })
+    .catch(function(e){
+      btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> כניסה עם Google';
+      btn.disabled=false;
+      var errMsg = e.code==='auth/operation-not-allowed' ?
+        '❌ הפעל Google Sign-In בFirebase Console → Authentication → Sign-in method' :
+        e.code==='auth/popup-closed-by-user' ? '⚠️ הכניסה בוטלה' :
+        '❌ שגיאה: '+e.message;
+      toast(errMsg);
+    });
+}
+
+function signInGuest(){
+  var name=document.getElementById('guest-name-input').value.trim();
+  if(!name){
+    document.getElementById('guest-name-input').style.borderColor='var(--xc)';
+    toast('⚠️ הכנס שם משתמש קודם!');
+    setTimeout(function(){document.getElementById('guest-name-input').style.borderColor='';},2000);
+    return;
+  }
+  S.name=name;
+  persistProfile();
+  hideLoinScreen();
+  renderHome();
+  renderSettings();
+}
+
+function signOut(){
+  localStorage.removeItem('xo_profile');
+  if(auth) auth.signOut();
+  S={name:'שחקן',av:'16000000',prefer:false,ai:{w:0,l:0,d:0},pl:{w:0,l:0,d:0},hist:[]};
+  showLoginScreen();
+}
+
+function persistProfile(){
+  // Save to localStorage for instant re-login
+  localStorage.setItem('xo_profile', JSON.stringify({
+    name:S.name, av:S.av, stats:{ai:S.ai,pl:S.pl,hist:S.hist}
+  }));
+  // If Google user, also save to Firebase DB
+  if(S.uid && db){
+    db.ref('users/'+S.uid).update({name:S.name,av:S.av,ai:S.ai,pl:S.pl,hist:S.hist||[]});
+  }
+}
+
+function setConn(on) {
+  var d = document.getElementById('cdot');
+  var l = document.getElementById('clbl');
+  if (on === null) { d.className='conn y'; l.textContent='מתחבר...'; }
+  else if (on)     { d.className='conn g'; l.textContent='מחובר לרשת'; }
+  else             { d.className='conn r'; l.textContent='לא מחובר'; }
+}
+
+// ================================================================
+// STATE
+// ================================================================
+var BRAWLERS = [
+  {id:'16000000',n:'Shelly',   e:'🦊'},
+  {id:'16000001',n:'Colt',     e:'🔫'},
+  {id:'16000002',n:'Bull',     e:'🐂'},
+  {id:'16000003',n:'Brock',    e:'🚀'},
+  {id:'16000004',n:'Rico',     e:'🎱'},
+  {id:'16000005',n:'Spike',    e:'🌵'},
+  {id:'16000006',n:'Barley',   e:'🍺'},
+  {id:'16000007',n:'Jessie',   e:'⚡'},
+  {id:'16000008',n:'Nita',     e:'🐻'},
+  {id:'16000009',n:'Dynamike', e:'💣'},
+  {id:'16000010',n:'El Primo', e:'🥊'},
+  {id:'16000011',n:'Mortis',   e:'⚰️'},
+  {id:'16000012',n:'Crow',     e:'🦅'},
+  {id:'16000013',n:'Poco',     e:'🎸'},
+  {id:'16000014',n:'Bo',       e:'🏹'},
+  {id:'16000015',n:'Piper',    e:'🎀'},
+  {id:'16000016',n:'Pam',      e:'🔧'},
+  {id:'16000017',n:'Tara',     e:'🔮'},
+  {id:'16000018',n:'Darryl',   e:'🤖'},
+  {id:'16000019',n:'Penny',    e:'🦜'},
+  {id:'16000020',n:'Frank',    e:'🔨'},
+  {id:'16000021',n:'Gene',     e:'🧞'},
+  {id:'16000022',n:'Tick',     e:'💥'},
+  {id:'16000023',n:'Leon',     e:'🦎'},
+  {id:'16000024',n:'Rosa',     e:'🌹'},
+];
+function brawlerImg(b){ return 'https://cdn.brawlify.com/brawler/regular/'+b.id+'.png'; }
+var AI_AVS = ['16000018','16000023','16000011','16000012']; // Darryl, Leon, Mortis, Crow
+var WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+var S = { // app state
+  name: 'שחקן', av: '16000000', prefer: false, uid: null, googlePhoto: null,
+  ai: {w:0,l:0,d:0}, pl: {w:0,l:0,d:0}, hist: []
+};
+
+var G = { // game state
+  board: Array(9).fill(null),
+  turn: 'X',        // whose turn: 'X' or 'O'
+  mySym: 'X',       // local player symbol
+  oppSym: 'O',
+  vsAI: true,
+  diff: 'medium',
+  over: false,
+  myName: '', oppName: '', myAv: '', oppAv: ''
+};
+
+var R = { // room state
+  code: '', isHost: false,
+  listener: null,
+  lastBoard: null  // last board we pushed to DB (to avoid echo)
+};
+
+function loadS() {
+  try { var s=localStorage.getItem('xo_s'); if(s) S=Object.assign(S,JSON.parse(s)); } catch(e){}
+}
+function saveS() { localStorage.setItem('xo_s', JSON.stringify(S)); }
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function go(screen) {
+  document.querySelectorAll('.sc').forEach(function(el){el.classList.remove('on');});
+  document.getElementById('sc-'+screen).classList.add('on');
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.toggle('on', b.dataset.s===screen);});
+  if (screen==='stats') renderStats();
+  if (screen==='settings') renderSettings();
+  if (screen==='home') renderHome();
+}
+document.querySelectorAll('.nb').forEach(function(b){
+  b.addEventListener('click', function(){go(b.dataset.s);});
+});
+
+// ================================================================
+// HOME
+// ================================================================
+function renderHome() {
+  document.getElementById('h-user').textContent = S.name;
+  // Avatar: Google photo OR brawler image
+  var avWrap = document.getElementById('h-av-wrap');
+  if(S.googlePhoto){
+    avWrap.innerHTML='<img src="'+S.googlePhoto+'" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;" onerror="this.style.display='none'">';
+  } else {
+    var b=getBrawlerById(S.av);
+    if(b){
+      avWrap.innerHTML='<img src="'+brawlerImg(b)+'" style="width:44px;height:44px;object-fit:contain;" alt="'+b.n+'">';
+    } else {
+      avWrap.innerHTML='<div style="font-size:2rem;">🦊</div>';
+    }
+  }
+  var badge=document.getElementById('h-google-badge');
+  if(badge) badge.style.display=S.googlePhoto?'block':'none';
+  document.getElementById('hw').textContent = (S.ai.w||0)+(S.pl.w||0);
+  document.getElementById('hl').textContent = (S.ai.l||0)+(S.pl.l||0);
+  document.getElementById('hd').textContent = (S.ai.d||0)+(S.pl.d||0);
+}
+
+// ================================================================
+// SETTINGS
+// ================================================================
+function renderSettings() {
+  document.getElementById('sname').value = S.name || '';
+  document.getElementById('togps').classList.toggle('on', S.prefer);
+  var g = document.getElementById('cgrid'); g.innerHTML='';
+  BRAWLERS.forEach(function(b){
+    var btn=document.createElement('button');
+    btn.className='cbtn'+(S.av===b.id?' sel':'');
+    btn.innerHTML='<img src="'+brawlerImg(b)+'" alt="'+b.n+'" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'></svg>'"><span>'+b.n+'</span>';
+    btn.onclick=function(){
+      document.querySelectorAll('.cbtn').forEach(function(x){x.classList.remove('sel');});
+      btn.classList.add('sel'); S.av=b.id;
+    };
+    g.appendChild(btn);
+  });
+}
+function togglePS(){S.prefer=!S.prefer;document.getElementById('togps').classList.toggle('on',S.prefer);}
+function saveS_btn(){
+  var u=document.getElementById('sname').value.trim();
+  if(u)S.name=u;
+  saveS();
+  persistProfile();
+  toast('✅ נשמר!');
+  renderHome();
+}
+window.saveS = saveS_btn;
+
+// ================================================================
+// STATS
+// ================================================================
+function renderStats() {
+  document.getElementById('saiw').textContent=S.ai.w||0;
+  document.getElementById('sail').textContent=S.ai.l||0;
+  document.getElementById('said').textContent=S.ai.d||0;
+  document.getElementById('spw').textContent=S.pl.w||0;
+  document.getElementById('spl').textContent=S.pl.l||0;
+  document.getElementById('spd').textContent=S.pl.d||0;
+  var hl=document.getElementById('hlist');
+  if(!S.hist.length){hl.innerHTML='<p class="hi" style="text-align:center;">אין משחקים</p>';return;}
+  hl.innerHTML=S.hist.slice(-20).reverse().map(function(h){
+    return '<div class="hitem"><span class="hr '+h.r+'">'+(h.r==='win'?'🏆':h.r==='lose'?'💀':'🤝')+'</span><div><div>'+h.vs+'</div><div class="hi">'+h.t+' · '+h.date+'</div></div></div>';
+  }).join('');
+}
+function addHist(r,vs,t){
+  S.hist.push({r:r,vs:vs,t:t,date:new Date().toLocaleDateString('he-IL')});
+  if(S.hist.length>100)S.hist=S.hist.slice(-100);
+  persistProfile();
+}
+
+// ================================================================
+// VS AI
+// ================================================================
+var curDiff='medium';
+function setD(d){curDiff=d;document.querySelectorAll('.db').forEach(function(b){b.classList.toggle('on',b.dataset.d===d);});}
+function goAI(){go('vsai');}
+
+function startAI(){
+  G.vsAI=true; G.diff=curDiff; G.over=false;
+  // who starts
+  var ps = S.prefer ? true : Math.random()<.5;
+  G.mySym = ps?'X':'O'; G.oppSym = ps?'O':'X';
+  G.myName=S.name; G.myAv=S.av;
+  G.oppName='AI '+curDiff; G.oppAv=AI_AVS[Math.floor(Math.random()*AI_AVS.length)];
+  G.board=Array(9).fill(null); G.turn='X';
+  buildUI(); go('game');
+  if(G.turn===G.oppSym) setTimeout(aiMove,600);
+}
+
+// ================================================================
+// GAME CORE
+// ================================================================
+function getBrawlerById(id){
+  for(var i=0;i<BRAWLERS.length;i++){ if(BRAWLERS[i].id===id||BRAWLERS[i].e===id) return BRAWLERS[i]; }
+  return null;
+}
+function setAvatar(elId, avId){
+  var el=document.getElementById(elId);
+  var b=getBrawlerById(avId);
+  if(b&&b.id){
+    el.outerHTML='<img id="'+elId+'" class="av" src="'+brawlerImg(b)+'" alt="'+b.n+'" onerror="this.style.display='none'">';
+  } else {
+    el.outerHTML='<div id="'+elId+'" class="av av-emoji">'+(avId||'🦊')+'</div>';
+  }
+}
+function buildUI(){
+  document.getElementById('rematch-banner').classList.remove('on');
+  document.getElementById('rematch-btn').style.display='block';
+  document.getElementById('rematch-btn').textContent='🔄 שחק שוב עם אותו יריב';
+  document.getElementById('rematch-msg').textContent='⏳ ממתין ליריב לאשר שחק שוב...';
+  // X player always on left card (pc1), O on right (pc2)
+  var xIsMe = G.mySym==='X';
+  setAvatar('g-av1', xIsMe ? G.myAv : G.oppAv);
+  document.getElementById('g-nm1').textContent = xIsMe ? G.myName : G.oppName;
+  document.getElementById('g-sy1').textContent = '✕ (X)';
+  document.getElementById('g-sy1').className='sy xs';
+  setAvatar('g-av2', xIsMe ? G.oppAv : G.myAv);
+  document.getElementById('g-nm2').textContent = xIsMe ? G.oppName : G.myName;
+  document.getElementById('g-sy2').textContent = '○ (O)';
+  document.getElementById('g-sy2').className='sy os';
+  drawBoard(); updateMsg();
+}
+
+function drawBoard(winLine){
+  var b=document.getElementById('board'); b.innerHTML='';
+  var xBrawler=getBrawlerById(G.mySym==='X'?G.myAv:G.oppAv);
+  var oBrawler=getBrawlerById(G.mySym==='O'?G.myAv:G.oppAv);
+  G.board.forEach(function(v,i){
+    var c=document.createElement('div');
+    var cls='cell'+(v?' tk '+v.toLowerCase():'');
+    if(winLine&&winLine.indexOf(i)>=0)cls+=' win';
+    c.className=cls;
+    if(v==='X'&&xBrawler){
+      var img=document.createElement('img');
+      img.src=brawlerImg(xBrawler);img.alt=xBrawler.n;
+      c.appendChild(img);
+    } else if(v==='O'&&oBrawler){
+      var img=document.createElement('img');
+      img.src=brawlerImg(oBrawler);img.alt=oBrawler.n;
+      c.appendChild(img);
+    }
+    c.onclick=function(){cellClick(i);};
+    b.appendChild(c);
+  });
+}
+
+function updateMsg(){
+  var nm = G.turn==='X' ?
+    (G.mySym==='X'?G.myName:G.oppName) :
+    (G.mySym==='O'?G.myName:G.oppName);
+  document.getElementById('gmsg').textContent = 'תור '+(G.turn==='X'?'✕':'○')+' – '+nm;
+  document.getElementById('pc1').classList.toggle('act', G.turn==='X');
+  document.getElementById('pc2').classList.toggle('act', G.turn==='O');
+}
+
+function cellClick(i){
+  if(G.over||G.board[i]) return;
+  // Block if not my turn
+  if(G.vsAI && G.turn!==G.mySym) return;
+  if(!G.vsAI && G.turn!==G.mySym){ toast('⏳ לא התור שלך!'); return; }
+
+  G.board[i]=G.turn;
+
+  // Push to Firebase for multiplayer
+  if(!G.vsAI && db && R.code){
+    var nextTurn = G.turn==='X'?'O':'X';
+    R.lastBoard = G.board.slice();
+    db.ref('rooms/'+R.code).update({board:G.board.slice(), turn:nextTurn});
+  }
+
+  var wl=chkWin(G.board);
+  if(wl){drawBoard(wl);endGame(wl);return;}
+  if(G.board.every(Boolean)){drawBoard();endDraw();return;}
+
+  G.turn = G.turn==='X'?'O':'X';
+  drawBoard(); updateMsg();
+  if(G.vsAI && G.turn===G.oppSym) setTimeout(aiMove,350+Math.random()*300);
+}
+
+function chkWin(board){
+  for(var i=0;i<WINS.length;i++){
+    var w=WINS[i];
+    if(board[w[0]]&&board[w[0]]===board[w[1]]&&board[w[1]]===board[w[2]])return w;
+  }
+  return null;
+}
+
+function endGame(wl){
+  G.over=true;
+  var iWon = G.turn===G.mySym;
+  var winnerName = G.turn==='X' ? (G.mySym==='X'?G.myName:G.oppName) : (G.mySym==='O'?G.myName:G.oppName);
+  document.getElementById('gmsg').textContent = iWon ? '🏆 ניצחת! '+S.name+'!' : '😔 '+winnerName+' ניצח!';
+  var cat = G.vsAI?'ai':'pl';
+  if(iWon){S[cat].w=(S[cat].w||0)+1;confetti();}
+  else S[cat].l=(S[cat].l||0)+1;
+  addHist(iWon?'win':'lose', G.vsAI?'AI '+G.diff:G.oppName, G.vsAI?'נגד מחשב':'נגד שחקן');
+  if(!G.vsAI&&db&&R.code) db.ref('rooms/'+R.code).update({over:true});
+  saveS();
+}
+
+function endDraw(){
+  G.over=true;
+  document.getElementById('gmsg').textContent='🤝 תיקו!';
+  var cat=G.vsAI?'ai':'pl';
+  S[cat].d=(S[cat].d||0)+1;
+  addHist('draw',G.vsAI?'AI':G.oppName,G.vsAI?'נגד מחשב':'נגד שחקן');
+  if(!G.vsAI&&db&&R.code) db.ref('rooms/'+R.code).update({over:true});
+  saveS();
+}
+
+function restartG(){
+  if(G.vsAI){ cleanRoom(); startAI(); return; }
+  // Multiplayer: request rematch with same opponent
+  requestRematch();
+}
+
+function requestRematch(){
+  if(!db||!R.code){ cleanRoom(); go('mp'); return; }
+  document.getElementById('rematch-banner').classList.add('on');
+  document.getElementById('rematch-btn').style.display='none';
+  document.getElementById('rematch-msg').textContent='⏳ ממתין ליריב לאשר שחק שוב...';
+  // Write my rematch flag to DB - setupMulti listener will pick up the response
+  var myKey = R.isHost ? 'hostRematch' : 'guestRematch';
+  db.ref('rooms/'+R.code).update({[myKey]: true});
+}
+
+function startRematch(d){
+  // Swap symbols each rematch
+  var newHostSym = d.hostSym==='X'?'O':'X';
+  var newGuestSym = d.guestSym==='X'?'O':'X';
+  var updates = {
+    board: Array(9).fill(null), turn:'X', over:false,
+    hostRematch:false, guestRematch:false,
+    hostSym:newHostSym, guestSym:newGuestSym
+  };
+  // Only host writes the reset (prevents double-write)
+  var doStart = function(){
+    db.ref('rooms/'+R.code).get().then(function(snap){
+      setupMulti(snap.val(), R.isHost);
+    });
+  };
+  if(R.isHost){
+    db.ref('rooms/'+R.code).update(updates).then(function(){ setTimeout(doStart,200); });
+  } else {
+    setTimeout(doStart, 500); // guest waits for host to write reset
+  }
+}
+function endG(){cleanRoom();go('home');}
+
+// ================================================================
+// AI
+// ================================================================
+function aiMove(){
+  if(G.over)return;
+  var mv=bestMove(G.diff);
+  G.board[mv]=G.oppSym;
+  var wl=chkWin(G.board);
+  if(wl){drawBoard(wl);endGame(wl);return;}
+  if(G.board.every(Boolean)){drawBoard();endDraw();return;}
+  G.turn=G.mySym;
+  drawBoard();updateMsg();
+}
+
+function bestMove(d){
+  var emp=G.board.map(function(v,i){return v?-1:i;}).filter(function(i){return i>=0;});
+  if(d==='easy'&&Math.random()<.7)return emp[Math.floor(Math.random()*emp.length)];
+  if(d==='medium'&&Math.random()<.4)return emp[Math.floor(Math.random()*emp.length)];
+  return mm(G.board.slice(),G.oppSym,G.oppSym,G.mySym,0).idx;
+}
+
+function mm(board,sym,ai,pl,depth){
+  var wl=chkWin(board);
+  if(wl)return{score:board[wl[0]]===ai?10-depth:depth-10};
+  var emp=board.map(function(v,i){return v?-1:i;}).filter(function(i){return i>=0;});
+  if(!emp.length)return{score:0};
+  var moves=emp.map(function(i){
+    var nb=board.slice();nb[i]=sym;
+    return{idx:i,score:mm(nb,sym===ai?pl:ai,ai,pl,depth+1).score};
+  });
+  return sym===ai?moves.reduce(function(a,b){return b.score>a.score?b:a;}):moves.reduce(function(a,b){return b.score<a.score?b:a;});
+}
+
+// ================================================================
+// MULTIPLAYER
+// ================================================================
+function goMP(){
+  document.getElementById('mpwarn').style.display=db?'none':'block';
+  go('mp');
+}
+
+function genCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+
+function createRoom(){
+  if(!db){toast('⚠️ לא מחובר לרשת');return;}
+  R.code=genCode(); R.isHost=true; R.lastBoard=null;
+  db.ref('rooms/'+R.code).set({
+    hostName:S.name, hostAv:S.av, hostPrefer:S.prefer,
+    guestName:null, guestAv:null, guestPrefer:null,
+    hostSym:null, guestSym:null,
+    board:Array(9).fill(null), turn:null, over:false, ts:Date.now()
+  });
+  go('room');
+  document.getElementById('rcode').textContent=R.code;
+  makeQR(R.code);
+  // Wait for guest
+  R.listener=db.ref('rooms/'+R.code).on('value',function(snap){
+    var d=snap&&snap.val();
+    if(d&&d.guestName&&!G.myName){
+      stopListener();
+      setupMulti(d, true);
+    }
+  });
+}
+
+function joinRoom(){
+  if(!db){toast('⚠️ לא מחובר לרשת');return;}
+  var code=document.getElementById('jcode').value.trim().toUpperCase();
+  if(code.length!==6){toast('קוד חייב להיות 6 תווים');return;}
+  db.ref('rooms/'+code).get().then(function(snap){
+    if(!snap.exists()){toast('❌ חדר לא נמצא');return;}
+    var d=snap.val();
+    if(d.guestName){toast('❌ החדר מלא');return;}
+    R.code=code; R.isHost=false; R.lastBoard=null;
+    // Decide symbols
+    var hostStarts;
+    if(d.hostPrefer&&!S.prefer) hostStarts=true;
+    else if(!d.hostPrefer&&S.prefer) hostStarts=false;
+    else hostStarts=Math.random()<.5;
+    var hostSym=hostStarts?'X':'O';
+    var guestSym=hostStarts?'O':'X';
+    db.ref('rooms/'+code).update({
+      guestName:S.name, guestAv:S.av, guestPrefer:S.prefer,
+      hostSym:hostSym, guestSym:guestSym,
+      board:Array(9).fill(null), turn:'X', over:false
+    });
+    db.ref('rooms/'+code).get().then(function(snap2){
+      setupMulti(snap2.val(), false);
+    });
+  });
+}
+
+function setupMulti(d, isHost){
+  stopListener();
+  G.vsAI=false; G.over=false;
+  G.board=d.board||Array(9).fill(null);
+  G.turn=d.turn||'X';
+  G.mySym  = isHost ? d.hostSym  : d.guestSym;
+  G.oppSym = isHost ? d.guestSym : d.hostSym;
+  G.myName  = S.name;
+  G.myAv    = S.av;
+  G.oppName = isHost ? d.guestName : d.hostName;
+  G.oppAv   = isHost ? d.guestAv   : d.hostAv;
+  R.lastBoard = G.board.slice();
+  buildUI(); go('game');
+
+  // Listen for ALL room changes (moves + rematch signals)
+  R.listener = db.ref('rooms/'+R.code).on('value', function(snap){
+    if(!snap) return;
+    var d2=snap.val(); if(!d2) return;
+
+    // --- REMATCH SIGNAL ---
+    var myRematch  = R.isHost ? d2.hostRematch  : d2.guestRematch;
+    var oppRematch = R.isHost ? d2.guestRematch : d2.hostRematch;
+    if(oppRematch && !myRematch && G.over){
+      // Opponent wants rematch - show prompt to this player
+      document.getElementById('rematch-banner').classList.add('on');
+      document.getElementById('rematch-msg').textContent='🔄 היריב רוצה לשחק שוב!';
+      document.getElementById('rematch-btn').style.display='block';
+      document.getElementById('rematch-btn').textContent='✅ קבל שחק שוב!';
+    }
+    if(d2.hostRematch && d2.guestRematch){
+      // Both agreed - start rematch
+      stopListener();
+      startRematch(d2);
+      return;
+    }
+
+    // --- BOARD MOVE ---
+    if(G.over || !d2.board) return;
+    var theirBoard=d2.board;
+    var changed=false;
+    for(var i=0;i<9;i++){
+      if(theirBoard[i]&&!G.board[i]){
+        G.board[i]=theirBoard[i];
+        changed=true;
+      }
+    }
+    if(!changed) return;
+    G.turn = d2.turn || (G.turn==='X'?'O':'X');
+    var wl=chkWin(G.board);
+    if(wl){drawBoard(wl);endGame(wl);}
+    else if(G.board.every(Boolean)){drawBoard();endDraw();}
+    else{drawBoard();updateMsg();}
+  });
+}
+
+function stopListener(){
+  if(R.listener&&db&&R.code){
+    db.ref('rooms/'+R.code).off('value',R.listener);
+    R.listener=null;
+  }
+}
+
+function cleanRoom(){
+  stopListener();
+  R.code=''; R.isHost=false; R.lastBoard=null;
+  G.myName=''; // reset so join detection works
+}
+
+function cancelRoom(){
+  stopListener();
+  if(db&&R.code) db.ref('rooms/'+R.code).remove();
+  R.code=''; R.isHost=false;
+  go('home');
+}
+
+function makeQR(code){
+  var el=document.getElementById('qrc'); el.innerHTML='';
+  var url=location.href.split('?')[0]+'?join='+code;
+  // Use standard black/white for best scanner compatibility
+  try{
+    new QRCode(el,{
+      text:url, width:200, height:200,
+      colorDark:'#000000', colorLight:'#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    // Wrap in white background div for contrast
+    el.style.background='#fff';
+    el.style.padding='8px';
+    el.style.borderRadius='12px';
+    el.style.display='inline-block';
+  }catch(e){
+    el.textContent=url;
+  }
+}
+
+function checkURLJoin(){
+  var p=new URLSearchParams(location.search);
+  var c=p.get('join');
+  if(c){
+    history.replaceState({},'',location.pathname);
+    go('mp');
+    document.getElementById('jcode').value=c.toUpperCase();
+    setTimeout(joinRoom,800);
+  }
+}
+
+// ================================================================
+// EFFECTS
+// ================================================================
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('sh');
+  setTimeout(function(){t.classList.remove('sh');},2400);
+}
+
+function confetti(){
+  var w=document.getElementById('cfw'); w.innerHTML='';
+  var cols=['#f59e0b','#ec4899','#38bdf8','#4ade80','#a78bfa','#f43f5e'];
+  for(var i=0;i<55;i++){
+    var el=document.createElement('div'); el.className='cf';
+    el.style.cssText='left:'+Math.random()*100+'vw;background:'+cols[Math.floor(Math.random()*cols.length)]+';width:'+(6+Math.random()*7)+'px;height:'+(6+Math.random()*7)+'px;border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-delay:'+Math.random()*1.4+'s;animation-duration:'+(1.8+Math.random()*1.4)+'s;';
+    w.appendChild(el);
+  }
+  setTimeout(function(){w.innerHTML='';},3800);
+}
+
+// ================================================================
+// QR SCANNER
+// ================================================================
+var qrStream = null;
+var qrInterval = null;
+
+function startQRScan(){
+  if(typeof jsQR==='undefined'){
+    toast('❌ ספריית jsQR לא נטענה');return;
+  }
+  var wrap = document.getElementById('qr-scanner-wrap');
+  wrap.classList.add('on');
+  var video = document.getElementById('qr-video');
+  var canvas = document.getElementById('qr-canvas');
+  var ctx = canvas.getContext('2d');
+  var statusEl = document.getElementById('qr-status');
+  statusEl.textContent='מבקש הרשאת מצלמה...';
+
+  var constraints = {video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720}}};
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(function(stream){
+      qrStream = stream;
+      video.srcObject = stream;
+      video.play();
+      statusEl.textContent='📷 מכוון את המצלמה ל-QR הלבן של החבר...';
+      qrInterval = setInterval(function(){
+        if(video.readyState < video.HAVE_ENOUGH_DATA) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        // Try normal scan
+        var code = jsQR(imageData.data, imageData.width, imageData.height, {inversionAttempts:'dontInvert'});
+        // If not found, try inverted
+        if(!code) code = jsQR(imageData.data, imageData.width, imageData.height, {inversionAttempts:'onlyInvert'});
+        if(code){
+          var url = code.data;
+          var m = url.match(/[?&]join=([A-Z0-9a-z]{6})/);
+          var joinCode = m ? m[1].toUpperCase() : (url.trim().length===6 ? url.trim().toUpperCase() : null);
+          if(joinCode){
+            stopQRScan();
+            statusEl.textContent='✅ נמצא!';
+            document.getElementById('jcode').value = joinCode;
+            toast('✅ QR נסרק! מצטרף לחדר '+joinCode+'...');
+            setTimeout(joinRoom, 400);
+          }
+        }
+      }, 200);
+    })
+    .catch(function(e){
+      var msg = e.name==='NotAllowedError'?'❌ נדחתה הרשאת מצלמה. אפשר בהגדרות הדפדפן.' :
+                e.name==='NotFoundError'?'❌ לא נמצאה מצלמה במכשיר.' :
+                '❌ שגיאה: '+e.message;
+      statusEl.textContent=msg;
+    });
+}
+
+function stopQRScan(){
+  if(qrInterval){ clearInterval(qrInterval); qrInterval=null; }
+  if(qrStream){ qrStream.getTracks().forEach(function(t){t.stop();}); qrStream=null; }
+  document.getElementById('qr-scanner-wrap').classList.remove('on');
+  document.getElementById('qr-status').textContent='מכוון את המצלמה לקוד QR...';
+}
+
+// ================================================================
+// INIT
+// ================================================================
+// S is initialized with defaults; auth will populate from DB/localStorage
+initFB();
+checkURLJoin();
+// Show login screen initially (auth check will hide it if logged in)
+// Auth check in checkPersistedLogin will show/hide login
+</script>
+</body>
+</html>
