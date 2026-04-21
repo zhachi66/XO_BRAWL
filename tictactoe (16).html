@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XO Brawl ⚡</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif;
+  min-height:100vh;
+  background:linear-gradient(180deg,#87CEEB 0%,#E8A857 38%,#C4752A 65%,#8B3A00 100%);
+  color:#FFF8DC;
+}
+#login-wrap{
+  position:fixed;inset:0;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#87CEEB 0%,#E8A857 38%,#C4752A 65%,#8B3A00 100%);
+  padding:20px;overflow-y:auto;
+}
+#app-wrap{display:none;max-width:460px;margin:0 auto;padding:14px;}
+
+/* TITLE */
+.title-h1{
+  font-family:'Lilita One',cursive;
+  font-size:3rem;color:#FFD700;text-align:center;
+  text-shadow:3px 3px 0 #8B4500,-2px -2px 0 #8B4500,2px -2px 0 #8B4500,-2px 2px 0 #8B4500,0 5px 0 #5C2E00;
+  animation:glow 3s ease infinite;
+}
+.title-h1 span{color:#FF6B00;}
+@keyframes glow{0%,100%{text-shadow:3px 3px 0 #8B4500,-2px -2px 0 #8B4500,2px -2px 0 #8B4500,-2px 2px 0 #8B4500,0 5px 0 #5C2E00;}
+50%{text-shadow:3px 3px 0 #8B4500,-2px -2px 0 #8B4500,2px -2px 0 #8B4500,-2px 2px 0 #8B4500,0 5px 0 #5C2E00,0 0 30px rgba(255,200,0,.8);}}
+.title-sub{text-align:center;font-size:.82rem;color:#FFF8DC;margin:4px 0 16px;font-weight:700;}
+
+/* CARDS */
+.card{background:linear-gradient(180deg,rgba(61,34,24,.97),rgba(26,10,0,.98));border:2px solid #8B5520;border-radius:18px;padding:18px;margin-bottom:13px;box-shadow:0 4px 0 #5C2E00,0 8px 24px rgba(0,0,0,.5);}
+.card h2{font-family:'Lilita One',cursive;color:#FFD700;font-size:1rem;margin-bottom:12px;text-shadow:1px 1px 0 #8B4500;}
+
+/* BUTTONS */
+.btn{display:block;width:100%;padding:11px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:900;margin-bottom:9px;font-family:'Nunito',sans-serif;transition:transform .1s;}
+.btn:active{transform:scale(.97);}
+.btn-purple{background:linear-gradient(180deg,#9B4DCA,#6B21A8);color:#fff;border:2px solid #C084FC;box-shadow:0 3px 0 #4C1D95;}
+.btn-gold{background:linear-gradient(180deg,#FFD700,#FF8C00);color:#3D1E08;border:2px solid #FFE55C;box-shadow:0 3px 0 #8B6000;}
+.btn-brown{background:linear-gradient(180deg,#5C3010,#3D1E08);color:#FFF8DC;border:2px solid #8B5520;box-shadow:0 3px 0 #2A1005;}
+.btn-sm{display:inline-block;width:auto;padding:7px 14px;font-size:.82rem;margin-bottom:0;}
+.btn-row{display:flex;gap:8px;margin-bottom:0;}.btn-row .btn{flex:1;margin-bottom:0;}
+
+/* NAV */
+.nav{display:flex;justify-content:center;gap:7px;margin-bottom:13px;flex-wrap:wrap;}
+.nb{background:linear-gradient(180deg,#5C3010,#3D1E08);border:2px solid #8B5520;color:#FFD700;padding:7px 14px;border-radius:20px;cursor:pointer;font-size:.8rem;font-weight:800;font-family:'Nunito',sans-serif;box-shadow:0 2px 0 #2A1005;}
+.nb.on,.nb:hover{background:linear-gradient(180deg,#FF8C00,#FF4500);border-color:#FFD700;color:#fff;box-shadow:0 2px 0 #8B3A00;}
+
+/* SCREENS */
+.sc{display:none;animation:fi .25s ease;}
+.sc.on{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* STATS GRID */
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.sbox{background:rgba(0,0,0,.35);border-radius:12px;padding:10px;text-align:center;border:2px solid #8B5520;}
+.sbox .n{font-size:1.7rem;font-weight:900;color:#FFD700;font-family:'Lilita One',cursive;}
+.sbox .l{font-size:.65rem;color:#D4A96A;font-weight:700;}
+
+/* INPUT */
+input[type=text]{width:100%;padding:9px 12px;border-radius:9px;background:rgba(0,0,0,.4);border:2px solid #8B5520;color:#FFF8DC;font-size:.9rem;margin-bottom:9px;outline:none;font-family:'Nunito',sans-serif;font-weight:700;}
+input[type=text]:focus{border-color:#FFD700;}
+label{font-size:.8rem;color:#D4A96A;display:block;margin-bottom:3px;font-weight:700;}
+.sep{height:1px;background:linear-gradient(90deg,transparent,#8B5520,transparent);margin:10px 0;}
+
+/* TOGGLE */
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.tog{width:42px;height:22px;background:rgba(0,0,0,.4);border-radius:11px;border:2px solid #8B5520;position:relative;cursor:pointer;transition:background .2s;}
+.tog.on{background:linear-gradient(135deg,#FF8C00,#FF4500);}
+.tog::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:1px;left:2px;transition:left .2s;}
+.tog.on::after{left:22px;}
+
+/* CHAR GRID */
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px;}
+.cbtn{padding:5px 3px 6px;border-radius:10px;border:2px solid #8B5520;background:rgba(0,0,0,.35);cursor:pointer;text-align:center;transition:all .15s;}
+.cbtn.sel{border-color:#FFD700;background:rgba(255,165,0,.18);box-shadow:0 0 8px rgba(255,165,0,.4);}
+.cbtn:hover{border-color:#FF8C00;transform:scale(1.05);}
+.cbtn img{width:50px;height:50px;object-fit:contain;display:block;margin:0 auto;}
+.cbtn-name{font-size:.52rem;color:#D4A96A;display:block;font-weight:700;margin-top:2px;}
+
+/* DIFFICULTY */
+.diff-row{display:flex;gap:7px;margin-bottom:12px;}
+.db{flex:1;padding:9px;border:2px solid #8B5520;background:rgba(0,0,0,.35);color:#FFF8DC;border-radius:10px;cursor:pointer;font-size:.82rem;font-weight:800;font-family:'Nunito',sans-serif;transition:all .15s;}
+.db.on{border-color:#FFD700;color:#FFD700;background:rgba(255,165,0,.1);}
+
+/* GAME BOARD */
+.pbar{display:flex;gap:10px;margin-bottom:10px;align-items:stretch;}
+.pc{flex:1;padding:9px;border-radius:12px;background:linear-gradient(180deg,rgba(61,34,24,.9),rgba(26,10,0,.9));border:2px solid #8B5520;text-align:center;transition:all .25s;box-shadow:0 2px 0 #5C2E00;}
+.pc.act{border-color:#FFD700;background:linear-gradient(180deg,rgba(100,60,0,.6),rgba(60,30,0,.7));box-shadow:0 0 12px rgba(255,165,0,.4),0 2px 0 #8B6000;}
+.pc-av{width:50px;height:50px;object-fit:contain;display:block;margin:0 auto;}
+.pc-nm{font-size:.72rem;font-weight:800;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pc-sy{font-size:.65rem;font-weight:700;}
+.pc-sy.xs{color:#FF3366;}.pc-sy.os{color:#00CFFF;}
+.vs-mid{display:flex;align-items:center;color:#D4A96A;font-size:1rem;font-weight:900;padding:0 2px;}
+.gmsg{text-align:center;padding:9px;border-radius:10px;background:linear-gradient(180deg,rgba(61,34,24,.9),rgba(26,10,0,.9));border:2px solid #8B5520;font-weight:800;font-size:.95rem;margin-bottom:10px;min-height:40px;display:flex;align-items:center;justify-content:center;font-family:'Lilita One',cursive;color:#FFD700;text-shadow:1px 1px 0 #8B4500;}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;background:rgba(0,0,0,.3);border-radius:16px;border:2px solid #8B5520;}
+.cell{width:83px;height:83px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(61,34,24,.8),rgba(26,10,0,.9));border:2px solid #8B5520;border-radius:12px;cursor:pointer;transition:all .15s;overflow:hidden;}
+.cell:hover:not(.tk){background:linear-gradient(180deg,rgba(100,50,0,.8),rgba(60,20,0,.9));border-color:#FFD700;transform:scale(1.04);}
+.cell img{width:70px;height:70px;object-fit:contain;animation:pop .2s ease;}
+@keyframes pop{from{transform:scale(0) rotate(-10deg);opacity:0}to{transform:scale(1);opacity:1}}
+.cell.x{border-color:#FF3366;background:linear-gradient(180deg,rgba(100,10,30,.7),rgba(60,0,20,.8));}
+.cell.o{border-color:#00CFFF;background:linear-gradient(180deg,rgba(0,50,100,.7),rgba(0,30,70,.8));}
+.cell.tk{cursor:default;}
+.cell.win{border-color:#7FFF00;background:linear-gradient(180deg,rgba(30,100,0,.7),rgba(10,60,0,.8));animation:pulse .6s ease infinite alternate;}
+@keyframes pulse{from{box-shadow:0 0 8px rgba(127,255,0,.5)}to{box-shadow:0 0 22px rgba(127,255,0,.9)}}
+
+/* ROOM */
+.room-code{font-size:2rem;font-weight:900;letter-spacing:8px;text-align:center;color:#FFD700;background:rgba(0,0,0,.4);border-radius:12px;padding:14px;border:3px dashed #FFD700;margin:9px 0;font-family:'Lilita One',cursive;text-shadow:2px 2px 0 #8B4500;}
+#qrc{display:flex;justify-content:center;margin:9px 0;}
+#qrc>*{border-radius:10px;border:3px solid #fff;}
+.wd{display:inline-block;width:7px;height:7px;background:#FFD700;border-radius:50%;margin:0 2px;animation:bl 1s infinite;}
+.wd:nth-child(2){animation-delay:.2s;}.wd:nth-child(3){animation-delay:.4s;}
+@keyframes bl{0%,100%{opacity:.2}50%{opacity:1}}
+
+/* REMATCH */
+#rematch-banner{display:none;background:rgba(255,165,0,.1);border:2px solid #FFD700;border-radius:12px;padding:10px;margin-bottom:10px;text-align:center;font-size:.83rem;}
+#rematch-banner.on{display:block;}
+
+/* CONN DOT */
+.conn{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle;}
+.conn.g{background:#7FFF00;}.conn.r{background:#FF3366;}.conn.y{background:#FFD700;animation:bl 1s infinite;}
+.top-status{text-align:center;font-size:.75rem;color:#D4A96A;margin-bottom:10px;font-weight:700;}
+
+/* HISTORY */
+.hitem{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:rgba(0,0,0,.3);margin-bottom:5px;font-size:.78rem;border:1px solid rgba(139,85,32,.4);}
+.hr{font-weight:900;font-size:.95rem;}
+.hr.win{color:#7FFF00;}.hr.lose{color:#FF3366;}.hr.draw{color:#D4A96A;}
+
+/* QR SCANNER */
+#qr-scanner-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:8000;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+#qr-scanner-wrap.on{display:flex;}
+#qr-video{width:260px;height:260px;object-fit:cover;border-radius:16px;border:3px solid #FFD700;}
+#qr-canvas{display:none;}
+.qr-line{position:absolute;left:10%;width:80%;height:2px;background:#FFD700;animation:scan 2s linear infinite;top:50%;}
+.qr-frame{position:relative;margin-bottom:14px;}
+@keyframes scan{0%{top:5%}50%{top:95%}100%{top:5%}}
+#qr-status{color:#FFD700;font-size:.9rem;margin-bottom:12px;font-weight:800;text-align:center;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#FF8C00,#FF4500);color:#fff;padding:10px 22px;border-radius:22px;font-weight:900;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;border:2px solid #FFD700;box-shadow:0 3px 0 #8B3A00;font-family:'Nunito',sans-serif;}
+#toast.sh{opacity:1;}
+
+/* CONFETTI */
+#cfw{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;}
+.cf{position:absolute;animation:cff 2.5s ease-in forwards;}
+@keyframes cff{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+.warn{background:rgba(255,51,102,.1);border:1px solid #FF3366;border-radius:10px;padding:10px;margin-bottom:10px;font-size:.8rem;color:#FF3366;}
+.hi{font-size:.75rem;color:#D4A96A;font-weight:700;}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-wrap">
+  <div class="title-h1">XO <span>Brawl</span></div>
+  <div class="title-sub">⭐ Brawl Stars Edition ⭐</div>
+
+  <div style="display:flex;gap:8px;margin-bottom:18px;justify-content:center;">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000000.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000006.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000011.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000023.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+    <img src="https://cdn.brawlify.com/brawler/regular/16000009.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));" onerror="this.style.display='none'">
+  </div>
+
+  <div style="background:linear-gradient(180deg,rgba(61,34,24,.97),rgba(26,10,0,.98));border:2px solid #8B5520;border-radius:20px;padding:22px;width:100%;max-width:340px;box-shadow:0 4px 0 #5C2E00,0 8px 30px rgba(0,0,0,.6);">
+    <p style="text-align:center;font-family:'Lilita One',cursive;color:#FFD700;margin-bottom:16px;font-size:1.05rem;text-shadow:1px 1px 0 #8B4500;">🎮 בחר איך להיכנס</p>
+
+    <button id="btn-google" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:12px;border:none;cursor:pointer;background:#fff;color:#3c4043;font-size:.92rem;font-weight:800;box-shadow:0 3px 0 #bbb;margin-bottom:12px;font-family:'Nunito',sans-serif;">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      כניסה עם Google
+    </button>
+
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="height:1px;background:linear-gradient(90deg,transparent,#8B5520,transparent);margin-bottom:4px;"></div>
+      <span style="font-size:.72rem;color:#D4A96A;font-weight:700;">או כניסה כאורח</span>
+    </div>
+
+    <input type="text" id="guest-name" placeholder="הכנס שם משתמש..." maxlength="16" style="width:100%;padding:9px 12px;border-radius:9px;background:rgba(0,0,0,.4);border:2px solid #8B5520;color:#FFF8DC;font-size:.9rem;margin-bottom:10px;outline:none;font-family:'Nunito',sans-serif;font-weight:700;text-align:center;">
+    <button id="btn-guest" style="display:block;width:100%;padding:11px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(180deg,#FFD700,#FF8C00);color:#3D1E08;font-size:.95rem;font-weight:900;box-shadow:0 3px 0 #8B6000;font-family:'Nunito',sans-serif;">
+      🎮 כניסה כאורח
+    </button>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app-wrap">
+  <div class="title-h1" style="font-size:2.2rem;padding:14px 0 2px;">XO <span>Brawl</span></div>
+  <div class="top-status"><span class="conn r" id="cdot"></span><span id="clbl">מתחבר...</span></div>
+
+  <div class="nav">
+    <button class="nb on" id="nb-home">🏠 בית</button>
+    <button class="nb" id="nb-stats">📊 סטטס</button>
+    <button class="nb" id="nb-settings">⚙️ הגדרות</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="sc-home" class="sc on">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div id="h-av-wrap" style="flex-shrink:0;width:46px;height:46px;"></div>
+        <div style="flex:1;min-width:0;">
+          <div id="h-name" style="font-family:'Lilita One',cursive;font-size:1.1rem;color:#FFD700;text-shadow:1px 1px 0 #8B4500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">שחקן</div>
+          <div id="h-badge" style="font-size:.6rem;color:#D4A96A;font-weight:700;display:none;">✅ Google</div>
+        </div>
+        <button id="btn-signout" style="background:none;border:1px solid #8B5520;border-radius:8px;color:#D4A96A;padding:4px 9px;cursor:pointer;font-size:.62rem;font-weight:700;font-family:'Nunito',sans-serif;">יציאה</button>
+      </div>
+      <div class="sgrid">
+        <div class="sbox"><div class="n" id="hw">0</div><div class="l">ניצחונות</div></div>
+        <div class="sbox"><div class="n" id="hl">0</div><div class="l">הפסדים</div></div>
+        <div class="sbox"><div class="n" id="hd">0</div><div class="l">תיקו</div></div>
+      </div>
+      <button class="btn btn-purple" id="btn-vsai">🤖 נגד מחשב</button>
+      <button class="btn btn-gold" id="btn-vsmp">🌐 משחק רשת עם חבר</button>
+    </div>
+  </div>
+
+  <!-- VS AI -->
+  <div id="sc-vsai" class="sc">
+    <div class="card">
+      <h2>🤖 נגד המחשב</h2>
+      <div class="diff-row">
+        <button class="db on" id="db-easy">😊 קל</button>
+        <button class="db" id="db-medium">😤 בינוני</button>
+        <button class="db" id="db-hard">💀 קשה</button>
+      </div>
+      <button class="btn btn-purple" id="btn-start-ai">▶ התחל!</button>
+      <button class="btn btn-brown" id="btn-back-from-ai">◀ חזרה</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="sc-game" class="sc">
+    <div id="rematch-banner">
+      <div id="rematch-msg">⏳ ממתין ליריב לאשר שחק שוב...</div>
+      <button id="btn-rematch" style="margin-top:6px;background:linear-gradient(180deg,#FFD700,#FF8C00);border:none;border-radius:8px;padding:7px 16px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;color:#3D1E08;">🔄 שחק שוב עם אותו יריב</button>
+    </div>
+    <div class="pbar">
+      <div class="pc" id="pc1">
+        <img id="av1" class="pc-av" src="" alt="" onerror="this.style.display='none'">
+        <div class="pc-nm" id="nm1">שחקן</div>
+        <div class="pc-sy xs" id="sy1">✕ (X)</div>
+      </div>
+      <div class="vs-mid">VS</div>
+      <div class="pc" id="pc2">
+        <img id="av2" class="pc-av" src="" alt="" onerror="this.style.display='none'">
+        <div class="pc-nm" id="nm2">מחשב</div>
+        <div class="pc-sy os" id="sy2">○ (O)</div>
+      </div>
+    </div>
+    <div class="gmsg" id="gmsg">תורך!</div>
+    <div class="board" id="board"></div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn btn-brown" id="btn-restart">🔄 שחק שוב</button>
+      <button class="btn btn-brown" id="btn-home-from-game">🏠 בית</button>
+    </div>
+  </div>
+
+  <!-- MULTIPLAYER -->
+  <div id="sc-mp" class="sc">
+    <div class="card">
+      <h2>🌐 משחק רשת</h2>
+      <div id="mp-warn" class="warn" style="display:none;">⚠️ לא מחובר – נסה להיכנס מ-GitHub Pages</div>
+      <button class="btn btn-purple" id="btn-create-room">➕ צור חדר חדש</button>
+      <div class="sep"></div>
+      <label>הזן קוד להצטרפות:</label>
+      <div style="display:flex;gap:8px;margin-bottom:9px;">
+        <input type="text" id="jcode" placeholder="XXXXXX" maxlength="6" style="flex:1;margin-bottom:0;text-align:center;font-size:1.2rem;letter-spacing:5px;text-transform:uppercase;">
+        <button class="btn btn-gold btn-sm" id="btn-join" style="flex:0;">הצטרף</button>
+      </div>
+      <button class="btn btn-brown" id="btn-qr-scan">📷 סרוק QR קוד</button>
+      <button class="btn btn-brown" id="btn-back-from-mp">◀ חזרה</button>
+    </div>
+  </div>
+
+  <!-- WAITING ROOM -->
+  <div id="sc-room" class="sc">
+    <div class="card" style="text-align:center;">
+      <h2>⏳ ממתין ליריב...</h2>
+      <p class="hi">שתף את הקוד עם חברך:</p>
+      <div class="room-code" id="rcode">------</div>
+      <div id="qrc"></div>
+      <p class="hi" style="margin-top:8px;">ממתין <span class="wd"></span><span class="wd"></span><span class="wd"></span></p>
+      <button class="btn btn-brown" style="margin-top:10px;" id="btn-cancel-room">❌ ביטול</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="sc-stats" class="sc">
+    <div class="card">
+      <h2>📊 סטטיסטיקות</h2>
+      <p class="hi" style="margin-bottom:8px;">נגד מחשב:</p>
+      <div class="sgrid">
+        <div class="sbox"><div class="n" id="s-ai-w">0</div><div class="l">ניצחונות</div></div>
+        <div class="sbox"><div class="n" id="s-ai-l">0</div><div class="l">הפסדים</div></div>
+        <div class="sbox"><div class="n" id="s-ai-d">0</div><div class="l">תיקו</div></div>
+      </div>
+      <div class="sep"></div>
+      <p class="hi" style="margin-bottom:8px;">נגד שחקנים:</p>
+      <div class="sgrid">
+        <div class="sbox"><div class="n" id="s-pl-w">0</div><div class="l">ניצחונות</div></div>
+        <div class="sbox"><div class="n" id="s-pl-l">0</div><div class="l">הפסדים</div></div>
+        <div class="sbox"><div class="n" id="s-pl-d">0</div><div class="l">תיקו</div></div>
+      </div>
+      <div class="sep"></div>
+      <div id="hlist"><p class="hi" style="text-align:center;">אין משחקים</p></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="sc-settings" class="sc">
+    <div class="card">
+      <h2>⚙️ הגדרות</h2>
+      <label>שם משתמש:</label>
+      <input type="text" id="sname" maxlength="16" placeholder="הכנס שמך...">
+      <div class="tog-row">
+        <span style="font-size:.88rem;">מעדיף להתחיל ראשון</span>
+        <div class="tog" id="togps"></div>
+      </div>
+      <div class="sep"></div>
+      <p style="font-size:.85rem;color:#FFD700;margin-bottom:8px;font-family:'Lilita One',cursive;">🎮 בחר דמות:</p>
+      <div class="cgrid" id="cgrid"></div>
+      <button class="btn btn-purple" id="btn-save-settings">💾 שמור הגדרות</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR SCANNER OVERLAY -->
+<div id="qr-scanner-wrap">
+  <p style="color:#FFD700;font-weight:900;font-size:1.1rem;margin-bottom:12px;font-family:'Lilita One',cursive;">📷 סרוק QR של החבר</p>
+  <div class="qr-frame">
+    <video id="qr-video" autoplay playsinline muted></video>
+    <div class="qr-line"></div>
+  </div>
+  <canvas id="qr-canvas"></canvas>
+  <div id="qr-status">מכוון את המצלמה לקוד QR הלבן...</div>
+  <button id="btn-stop-qr" style="background:linear-gradient(180deg,#5C3010,#3D1E08);border:2px solid #8B5520;color:#FFF8DC;padding:10px 24px;border-radius:12px;cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;margin-top:10px;">❌ ביטול</button>
+</div>
+
+<div id="toast"></div>
+<div id="cfw"></div>
+
+<script>
+// ============================================================
+// ALL JS - no inline onclick, no template literals, no ES6+
+// ============================================================
+
+// --- FIREBASE CONFIG ---
+var FB_CFG = {
+  apiKey: "AIzaSyCSQxExv7G1SUr1gVMdeKVe2SsL3alcpDQ",
+  authDomain: "xo-brawl.firebaseapp.com",
+  databaseURL: "https://xo-brawl-default-rtdb.firebaseio.com",
+  projectId: "xo-brawl",
+  storageBucket: "xo-brawl.firebasestorage.app",
+  messagingSenderId: "1004866367649",
+  appId: "1:1004866367649:web:952fd958d564e7a7f2c0e0"
+};
+
+// --- BRAWLERS ---
+var BRAWLERS = [
+  {id:'16000000',n:'Shelly'}, {id:'16000001',n:'Colt'},
+  {id:'16000002',n:'Bull'},   {id:'16000003',n:'Brock'},
+  {id:'16000004',n:'Rico'},   {id:'16000005',n:'Spike'},
+  {id:'16000006',n:'Barley'}, {id:'16000007',n:'Jessie'},
+  {id:'16000008',n:'Nita'},   {id:'16000009',n:'Dynamike'},
+  {id:'16000010',n:'El Primo'},{id:'16000011',n:'Mortis'},
+  {id:'16000012',n:'Crow'},   {id:'16000013',n:'Poco'},
+  {id:'16000014',n:'Bo'},     {id:'16000015',n:'Piper'},
+  {id:'16000016',n:'Pam'},    {id:'16000017',n:'Tara'},
+  {id:'16000018',n:'Darryl'}, {id:'16000019',n:'Penny'},
+  {id:'16000020',n:'Frank'},  {id:'16000021',n:'Gene'},
+  {id:'16000022',n:'Tick'},   {id:'16000023',n:'Leon'},
+  {id:'16000024',n:'Rosa'}
+];
+var AI_IDS = ['16000018','16000023','16000011','16000012'];
+var WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+function brawlerUrl(id) {
+  return 'https://cdn.brawlify.com/brawler/regular/' + id + '.png';
+}
+function getBrawler(id) {
+  for (var i = 0; i < BRAWLERS.length; i++) {
+    if (BRAWLERS[i].id === id) return BRAWLERS[i];
+  }
+  return BRAWLERS[0];
+}
+
+// --- APP STATE ---
+var S = {
+  name: 'שחקן', av: '16000000', prefer: false,
+  uid: null, googlePhoto: null,
+  ai: {w:0,l:0,d:0}, pl: {w:0,l:0,d:0}, hist: []
+};
+
+// --- GAME STATE ---
+var G = {
+  board: [], turn: 'X', mySym: 'X', oppSym: 'O',
+  vsAI: true, diff: 'medium', over: false,
+  myName:'', oppName:'', myAv:'', oppAv:''
+};
+
+// --- ROOM STATE ---
+var R = {code:'', isHost:false, listener:null, lastBoard:null};
+
+// --- FIREBASE ---
+var db = null;
+var auth = null;
+
+// ============================================================
+// INIT - runs after DOM ready
+// ============================================================
+function init() {
+  bindButtons();
+  tryFirebase();
+  checkURLJoin();
+}
+
+function tryFirebase() {
+  try {
+    if (typeof firebase === 'undefined') {
+      showLogin();
+      return;
+    }
+    if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
+    db = firebase.database();
+    auth = firebase.auth();
+    db.ref('.info/connected').on('value', function(s) {
+      setConn(!!s.val());
+    });
+    checkSavedLogin();
+  } catch(e) {
+    console.error(e);
+    showLogin();
+  }
+}
+
+function checkSavedLogin() {
+  // Try localStorage first
+  var saved = localStorage.getItem('xo_profile');
+  if (saved) {
+    try {
+      var p = JSON.parse(saved);
+      if (p && p.name) {
+        applyProfile(p);
+        showApp();
+        return;
+      }
+    } catch(e) {
+      localStorage.removeItem('xo_profile');
+    }
+  }
+  // Try Firebase Auth
+  if (auth) {
+    var t = setTimeout(showLogin, 5000);
+    auth.onAuthStateChanged(function(user) {
+      clearTimeout(t);
+      if (user) {
+        S.name = user.displayName || user.email.split('@')[0];
+        S.googlePhoto = user.photoURL || null;
+        S.uid = user.uid;
+        loadUserDB(user.uid);
+      } else {
+        showLogin();
+      }
+    });
+  } else {
+    showLogin();
+  }
+}
+
+function applyProfile(p) {
+  if (p.name) S.name = p.name;
+  if (p.av)   S.av   = p.av;
+  if (p.ai)   S.ai   = p.ai;
+  if (p.pl)   S.pl   = p.pl;
+  if (p.hist) S.hist = p.hist;
+  if (p.prefer !== undefined) S.prefer = p.prefer;
+}
+
+function loadUserDB(uid) {
+  db.ref('users/' + uid).get().then(function(snap) {
+    if (snap && snap.exists()) applyProfile(snap.val());
+    saveLocal();
+    showApp();
+  }).catch(function() { showApp(); });
+}
+
+function saveLocal() {
+  localStorage.setItem('xo_profile', JSON.stringify({
+    name:S.name, av:S.av, ai:S.ai, pl:S.pl, hist:S.hist, prefer:S.prefer
+  }));
+}
+
+function saveCloud() {
+  saveLocal();
+  if (S.uid && db) {
+    db.ref('users/' + S.uid).update({
+      name:S.name, av:S.av, ai:S.ai, pl:S.pl, hist:S.hist, prefer:S.prefer
+    });
+  }
+}
+
+// ============================================================
+// SHOW / HIDE
+// ============================================================
+function showLogin() {
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('app-wrap').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('app-wrap').style.display = 'block';
+  renderHome();
+  renderSettings();
+}
+
+function goScreen(name) {
+  var screens = ['home','vsai','game','mp','room','stats','settings'];
+  for (var i = 0; i < screens.length; i++) {
+    var el = document.getElementById('sc-' + screens[i]);
+    if (el) el.classList.toggle('on', screens[i] === name);
+  }
+  var nbs = ['nb-home','nb-stats','nb-settings'];
+  var map = {'home':'nb-home','stats':'nb-stats','settings':'nb-settings'};
+  for (var k in map) {
+    var nb = document.getElementById(map[k]);
+    if (nb) nb.classList.toggle('on', k === name);
+  }
+  if (name === 'stats') renderStats();
+  if (name === 'settings') renderSettings();
+  if (name === 'home') renderHome();
+}
+
+function setConn(on) {
+  var d = document.getElementById('cdot');
+  var l = document.getElementById('clbl');
+  if (!d) return;
+  if (on === null) { d.className='conn y'; l.textContent='מתחבר...'; }
+  else if (on)     { d.className='conn g'; l.textContent='מחובר לרשת'; }
+  else             { d.className='conn r'; l.textContent='לא מחובר'; }
+}
+
+// ============================================================
+// AUTH ACTIONS
+// ============================================================
+function doGoogleLogin() {
+  if (!auth) { showToast('Firebase לא זמין'); return; }
+  var btn = document.getElementById('btn-google');
+  btn.textContent = '⏳ מתחבר...';
+  btn.disabled = true;
+  var provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({prompt:'select_account'});
+  auth.signInWithPopup(provider).then(function(result) {
+    var user = result.user;
+    S.name = user.displayName || user.email.split('@')[0];
+    S.googlePhoto = user.photoURL || null;
+    S.uid = user.uid;
+    loadUserDB(user.uid);
+  }).catch(function(e) {
+    btn.textContent = 'כניסה עם Google';
+    btn.disabled = false;
+    var msg = e.code === 'auth/operation-not-allowed'
+      ? 'הפעל Google Sign-In ב-Firebase Console'
+      : e.code === 'auth/popup-closed-by-user'
+      ? 'הכניסה בוטלה'
+      : e.message;
+    showToast('❌ ' + msg);
+  });
+}
+
+function doGuestLogin() {
+  var name = document.getElementById('guest-name').value.trim();
+  if (!name) {
+    document.getElementById('guest-name').style.borderColor = '#FF3366';
+    showToast('⚠️ הכנס שם משתמש!');
+    return;
+  }
+  S.name = name;
+  saveLocal();
+  showApp();
+}
+
+function doSignOut() {
+  localStorage.removeItem('xo_profile');
+  if (auth) auth.signOut();
+  S = {name:'שחקן',av:'16000000',prefer:false,uid:null,googlePhoto:null,ai:{w:0,l:0,d:0},pl:{w:0,l:0,d:0},hist:[]};
+  showLogin();
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderHome() {
+  document.getElementById('h-name').textContent = S.name;
+  var avWrap = document.getElementById('h-av-wrap');
+  avWrap.innerHTML = '';
+  if (S.googlePhoto) {
+    var img = document.createElement('img');
+    img.src = S.googlePhoto; img.style.cssText = 'width:46px;height:46px;border-radius:50%;border:2px solid #FFD700;object-fit:cover;';
+    avWrap.appendChild(img);
+  } else {
+    var img2 = document.createElement('img');
+    img2.src = brawlerUrl(S.av); img2.style.cssText = 'width:46px;height:46px;object-fit:contain;';
+    img2.onerror = function() { img2.style.display = 'none'; };
+    avWrap.appendChild(img2);
+  }
+  var badge = document.getElementById('h-badge');
+  if (badge) badge.style.display = S.googlePhoto ? 'block' : 'none';
+  document.getElementById('hw').textContent = (S.ai.w||0) + (S.pl.w||0);
+  document.getElementById('hl').textContent = (S.ai.l||0) + (S.pl.l||0);
+  document.getElementById('hd').textContent = (S.ai.d||0) + (S.pl.d||0);
+}
+
+function renderSettings() {
+  var sname = document.getElementById('sname');
+  if (sname) sname.value = S.name;
+  var tog = document.getElementById('togps');
+  if (tog) tog.classList.toggle('on', S.prefer);
+  var grid = document.getElementById('cgrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (var i = 0; i < BRAWLERS.length; i++) {
+    (function(b) {
+      var btn = document.createElement('button');
+      btn.className = 'cbtn' + (S.av === b.id ? ' sel' : '');
+      var img = document.createElement('img');
+      img.src = brawlerUrl(b.id); img.alt = b.n;
+      img.style.cssText = 'width:50px;height:50px;object-fit:contain;display:block;margin:0 auto;';
+      img.onerror = function() { img.style.display = 'none'; };
+      var lbl = document.createElement('span');
+      lbl.className = 'cbtn-name'; lbl.textContent = b.n;
+      btn.appendChild(img); btn.appendChild(lbl);
+      btn.onclick = function() {
+        var all = document.querySelectorAll('.cbtn');
+        for (var j = 0; j < all.length; j++) all[j].classList.remove('sel');
+        btn.classList.add('sel');
+        S.av = b.id;
+      };
+      grid.appendChild(btn);
+    })(BRAWLERS[i]);
+  }
+}
+
+function renderStats() {
+  document.getElementById('s-ai-w').textContent = S.ai.w || 0;
+  document.getElementById('s-ai-l').textContent = S.ai.l || 0;
+  document.getElementById('s-ai-d').textContent = S.ai.d || 0;
+  document.getElementById('s-pl-w').textContent = S.pl.w || 0;
+  document.getElementById('s-pl-l').textContent = S.pl.l || 0;
+  document.getElementById('s-pl-d').textContent = S.pl.d || 0;
+  var hl = document.getElementById('hlist');
+  if (!S.hist || !S.hist.length) {
+    hl.innerHTML = '<p class="hi" style="text-align:center;">אין משחקים</p>';
+    return;
+  }
+  var h = S.hist.slice(-20).reverse();
+  var html = '';
+  for (var i = 0; i < h.length; i++) {
+    var icon = h[i].r==='win'?'🏆':h[i].r==='lose'?'💀':'🤝';
+    html += '<div class="hitem"><span class="hr ' + h[i].r + '">' + icon + '</span><div>' + h[i].vs + '<br><span class="hi">' + h[i].t + ' · ' + h[i].date + '</span></div></div>';
+  }
+  hl.innerHTML = html;
+}
+
+function saveSettings() {
+  var u = document.getElementById('sname').value.trim();
+  if (u) S.name = u;
+  saveCloud();
+  showToast('✅ נשמר!');
+  renderHome();
+}
+
+function togglePS() {
+  S.prefer = !S.prefer;
+  document.getElementById('togps').classList.toggle('on', S.prefer);
+}
+
+function addHist(r, vs, t) {
+  if (!S.hist) S.hist = [];
+  S.hist.push({r:r, vs:vs, t:t, date:new Date().toLocaleDateString('he-IL')});
+  if (S.hist.length > 100) S.hist = S.hist.slice(-100);
+}
+
+// ============================================================
+// GAME
+// ============================================================
+var curDiff = 'medium';
+
+function setDiff(d) {
+  curDiff = d;
+  document.getElementById('db-easy').classList.toggle('on', d==='easy');
+  document.getElementById('db-medium').classList.toggle('on', d==='medium');
+  document.getElementById('db-hard').classList.toggle('on', d==='hard');
+}
+
+function startAI() {
+  G.vsAI = true; G.diff = curDiff; G.over = false;
+  var ps = S.prefer ? true : Math.random() < .5;
+  G.mySym = ps ? 'X' : 'O'; G.oppSym = ps ? 'O' : 'X';
+  G.myName = S.name; G.myAv = S.av;
+  G.oppName = 'AI ' + curDiff;
+  G.oppAv = AI_IDS[Math.floor(Math.random() * AI_IDS.length)];
+  G.board = Array(9).fill(null); G.turn = 'X';
+  buildBoard(); goScreen('game');
+  if (G.turn === G.oppSym) setTimeout(aiMove, 600);
+}
+
+function buildBoard() {
+  document.getElementById('rematch-banner').classList.remove('on');
+  var xIsMe = G.mySym === 'X';
+  var myB = getBrawler(G.myAv);
+  var oppB = getBrawler(G.oppAv);
+  var av1 = document.getElementById('av1');
+  var av2 = document.getElementById('av2');
+  av1.src = brawlerUrl(xIsMe ? myB.id : oppB.id); av1.style.display = 'block';
+  av2.src = brawlerUrl(xIsMe ? oppB.id : myB.id); av2.style.display = 'block';
+  document.getElementById('nm1').textContent = xIsMe ? G.myName : G.oppName;
+  document.getElementById('nm2').textContent = xIsMe ? G.oppName : G.myName;
+  document.getElementById('sy1').textContent = '✕ (X)';
+  document.getElementById('sy2').textContent = '○ (O)';
+  drawBoard(); updateMsg();
+}
+
+function drawBoard(winLine) {
+  var b = document.getElementById('board');
+  b.innerHTML = '';
+  var xB = getBrawler(G.mySym==='X' ? G.myAv : G.oppAv);
+  var oB = getBrawler(G.mySym==='O' ? G.myAv : G.oppAv);
+  for (var i = 0; i < 9; i++) {
+    (function(idx) {
+      var c = document.createElement('div');
+      var v = G.board[idx];
+      c.className = 'cell' + (v ? ' tk ' + v.toLowerCase() : '');
+      if (winLine && winLine.indexOf(idx) >= 0) c.className += ' win';
+      if (v === 'X') {
+        var img = document.createElement('img');
+        img.src = brawlerUrl(xB.id); img.alt = xB.n;
+        c.appendChild(img);
+      } else if (v === 'O') {
+        var img2 = document.createElement('img');
+        img2.src = brawlerUrl(oB.id); img2.alt = oB.n;
+        c.appendChild(img2);
+      }
+      c.onclick = function() { cellClick(idx); };
+      b.appendChild(c);
+    })(i);
+  }
+}
+
+function updateMsg() {
+  var nm = G.turn === 'X'
+    ? (G.mySym==='X' ? G.myName : G.oppName)
+    : (G.mySym==='O' ? G.myName : G.oppName);
+  document.getElementById('gmsg').textContent = 'תור ' + (G.turn==='X'?'✕':'○') + ' – ' + nm;
+  document.getElementById('pc1').classList.toggle('act', G.turn==='X');
+  document.getElementById('pc2').classList.toggle('act', G.turn==='O');
+}
+
+function cellClick(i) {
+  if (G.over || G.board[i]) return;
+  if (G.vsAI && G.turn !== G.mySym) return;
+  if (!G.vsAI && G.turn !== G.mySym) { showToast('⏳ לא התור שלך!'); return; }
+  G.board[i] = G.turn;
+  if (!G.vsAI && db && R.code) {
+    var next = G.turn === 'X' ? 'O' : 'X';
+    R.lastBoard = G.board.slice();
+    var upd = {board: G.board.slice(), turn: next};
+    db.ref('rooms/' + R.code).update(upd);
+  }
+  var wl = chkWin(G.board);
+  if (wl) { drawBoard(wl); gameOver(wl); return; }
+  if (G.board.every(Boolean)) { drawBoard(); gameDraw(); return; }
+  G.turn = G.turn === 'X' ? 'O' : 'X';
+  drawBoard(); updateMsg();
+  if (G.vsAI && G.turn === G.oppSym) setTimeout(aiMove, 350 + Math.random()*300);
+}
+
+function chkWin(board) {
+  for (var i = 0; i < WINS.length; i++) {
+    var w = WINS[i];
+    if (board[w[0]] && board[w[0]] === board[w[1]] && board[w[1]] === board[w[2]]) return w;
+  }
+  return null;
+}
+
+function gameOver(wl) {
+  G.over = true;
+  var iWon = G.turn === G.mySym;
+  var wName = G.turn==='X' ? (G.mySym==='X'?G.myName:G.oppName) : (G.mySym==='O'?G.myName:G.oppName);
+  document.getElementById('gmsg').textContent = iWon ? '🏆 ניצחת! ' + S.name + '!' : '😔 ' + wName + ' ניצח!';
+  var cat = G.vsAI ? 'ai' : 'pl';
+  if (iWon) { S[cat].w = (S[cat].w||0)+1; confetti(); }
+  else S[cat].l = (S[cat].l||0)+1;
+  addHist(iWon?'win':'lose', G.vsAI?'AI '+G.diff:G.oppName, G.vsAI?'נגד מחשב':'נגד שחקן');
+  if (!G.vsAI && db && R.code) db.ref('rooms/'+R.code).update({over:true});
+  saveCloud();
+  if (!G.vsAI) showRematchBtn();
+}
+
+function gameDraw() {
+  G.over = true;
+  document.getElementById('gmsg').textContent = '🤝 תיקו!';
+  var cat = G.vsAI ? 'ai' : 'pl';
+  S[cat].d = (S[cat].d||0)+1;
+  addHist('draw', G.vsAI?'AI':G.oppName, G.vsAI?'נגד מחשב':'נגד שחקן');
+  if (!G.vsAI && db && R.code) db.ref('rooms/'+R.code).update({over:true});
+  saveCloud();
+  if (!G.vsAI) showRematchBtn();
+}
+
+function showRematchBtn() {
+  var banner = document.getElementById('rematch-banner');
+  banner.classList.add('on');
+  document.getElementById('btn-rematch').style.display = 'block';
+  document.getElementById('rematch-msg').textContent = '🔄 רוצה לשחק שוב?';
+}
+
+function doRestart() {
+  if (G.vsAI) { startAI(); return; }
+  doRequestRematch();
+}
+
+function doRequestRematch() {
+  if (!db || !R.code) { cleanRoom(); goScreen('mp'); return; }
+  document.getElementById('rematch-banner').classList.add('on');
+  document.getElementById('btn-rematch').style.display = 'none';
+  document.getElementById('rematch-msg').textContent = '⏳ ממתין ליריב לאשר שחק שוב...';
+  var myKey = R.isHost ? 'hostRematch' : 'guestRematch';
+  var upd = {}; upd[myKey] = true;
+  db.ref('rooms/' + R.code).update(upd);
+}
+
+function doRematch(d) {
+  document.getElementById('rematch-banner').classList.remove('on');
+  var newHostSym = d.hostSym === 'X' ? 'O' : 'X';
+  var newGuestSym = d.guestSym === 'X' ? 'O' : 'X';
+  var updates = {board:Array(9).fill(null), turn:'X', over:false,
+    hostRematch:false, guestRematch:false,
+    hostSym:newHostSym, guestSym:newGuestSym};
+  if (R.isHost) {
+    db.ref('rooms/' + R.code).update(updates).then(function() {
+      setTimeout(function() {
+        db.ref('rooms/' + R.code).get().then(function(snap) {
+          setupMulti(snap.val(), true);
+        });
+      }, 300);
+    });
+  } else {
+    setTimeout(function() {
+      db.ref('rooms/' + R.code).get().then(function(snap) {
+        setupMulti(snap.val(), false);
+      });
+    }, 600);
+  }
+}
+
+function doEndGame() { cleanRoom(); goScreen('home'); renderHome(); }
+
+// ============================================================
+// AI
+// ============================================================
+function aiMove() {
+  if (G.over) return;
+  var mv = bestMove(G.diff);
+  G.board[mv] = G.oppSym;
+  var wl = chkWin(G.board);
+  if (wl) { drawBoard(wl); gameOver(wl); return; }
+  if (G.board.every(Boolean)) { drawBoard(); gameDraw(); return; }
+  G.turn = G.mySym; drawBoard(); updateMsg();
+}
+
+function bestMove(d) {
+  var emp = [];
+  for (var i = 0; i < 9; i++) if (!G.board[i]) emp.push(i);
+  if (d === 'easy' && Math.random() < .7) return emp[Math.floor(Math.random()*emp.length)];
+  if (d === 'medium' && Math.random() < .4) return emp[Math.floor(Math.random()*emp.length)];
+  return mm(G.board.slice(), G.oppSym, G.oppSym, G.mySym, 0).idx;
+}
+
+function mm(board, sym, ai, pl, depth) {
+  var wl = chkWin(board);
+  if (wl) return {score: board[wl[0]] === ai ? 10-depth : depth-10};
+  var emp = [];
+  for (var i = 0; i < 9; i++) if (!board[i]) emp.push(i);
+  if (!emp.length) return {score:0};
+  var moves = [];
+  for (var j = 0; j < emp.length; j++) {
+    var nb = board.slice(); nb[emp[j]] = sym;
+    moves.push({idx:emp[j], score:mm(nb, sym===ai?pl:ai, ai, pl, depth+1).score});
+  }
+  var best = moves[0];
+  for (var k = 1; k < moves.length; k++) {
+    if (sym === ai ? moves[k].score > best.score : moves[k].score < best.score) best = moves[k];
+  }
+  return best;
+}
+
+// ============================================================
+// MULTIPLAYER
+// ============================================================
+function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
+
+function doCreateRoom() {
+  if (!db) { showToast('⚠️ לא מחובר'); return; }
+  R.code = genCode(); R.isHost = true; R.lastBoard = null;
+  db.ref('rooms/' + R.code).set({
+    hostName:S.name, hostAv:S.av, hostPrefer:S.prefer,
+    guestName:null, guestAv:null, guestPrefer:null,
+    hostSym:null, guestSym:null,
+    board:Array(9).fill(null), turn:null, over:false, ts:Date.now()
+  });
+  goScreen('room');
+  document.getElementById('rcode').textContent = R.code;
+  makeQR(R.code);
+  R.listener = db.ref('rooms/' + R.code).on('value', function(snap) {
+    var d = snap && snap.val();
+    if (d && d.guestName && !G.myName) {
+      stopRoomListener();
+      setupMulti(d, true);
+    }
+  });
+}
+
+function doJoinRoom() {
+  if (!db) { showToast('⚠️ לא מחובר'); return; }
+  var code = document.getElementById('jcode').value.trim().toUpperCase();
+  if (code.length !== 6) { showToast('קוד חייב להיות 6 תווים'); return; }
+  db.ref('rooms/' + code).get().then(function(snap) {
+    if (!snap.exists()) { showToast('❌ חדר לא נמצא'); return; }
+    var d = snap.val();
+    if (d.guestName) { showToast('❌ החדר מלא'); return; }
+    R.code = code; R.isHost = false; R.lastBoard = null;
+    var hostStarts;
+    if (d.hostPrefer && !S.prefer) hostStarts = true;
+    else if (!d.hostPrefer && S.prefer) hostStarts = false;
+    else hostStarts = Math.random() < .5;
+    var hSym = hostStarts ? 'X' : 'O';
+    var gSym = hostStarts ? 'O' : 'X';
+    db.ref('rooms/' + code).update({
+      guestName:S.name, guestAv:S.av, guestPrefer:S.prefer,
+      hostSym:hSym, guestSym:gSym,
+      board:Array(9).fill(null), turn:'X', over:false
+    });
+    db.ref('rooms/' + code).get().then(function(snap2) {
+      setupMulti(snap2.val(), false);
+    });
+  });
+}
+
+function setupMulti(d, isHost) {
+  stopRoomListener();
+  G.vsAI = false; G.over = false;
+  G.board = d.board || Array(9).fill(null);
+  G.turn = d.turn || 'X';
+  G.mySym  = isHost ? d.hostSym  : d.guestSym;
+  G.oppSym = isHost ? d.guestSym : d.hostSym;
+  G.myName  = S.name; G.myAv  = S.av;
+  G.oppName = isHost ? d.guestName : d.hostName;
+  G.oppAv   = isHost ? (d.guestAv||AI_IDS[0]) : (d.hostAv||AI_IDS[0]);
+  R.lastBoard = G.board.slice();
+  buildBoard(); goScreen('game');
+  R.listener = db.ref('rooms/' + R.code).on('value', function(snap) {
+    if (!snap) return;
+    var d2 = snap.val(); if (!d2) return;
+    // Handle rematch
+    var myRM  = R.isHost ? d2.hostRematch  : d2.guestRematch;
+    var oppRM = R.isHost ? d2.guestRematch : d2.hostRematch;
+    if (oppRM && !myRM && G.over) {
+      document.getElementById('rematch-banner').classList.add('on');
+      document.getElementById('rematch-msg').textContent = '🔄 היריב רוצה לשחק שוב!';
+      document.getElementById('btn-rematch').style.display = 'block';
+      document.getElementById('btn-rematch').textContent = '✅ קבל שחק שוב!';
+    }
+    if (d2.hostRematch && d2.guestRematch) {
+      stopRoomListener();
+      doRematch(d2);
+      return;
+    }
+    // Handle board moves
+    if (G.over || !d2.board) return;
+    var changed = false;
+    for (var i = 0; i < 9; i++) {
+      if (d2.board[i] && !G.board[i]) { G.board[i] = d2.board[i]; changed = true; }
+    }
+    if (!changed) return;
+    G.turn = d2.turn || (G.turn==='X'?'O':'X');
+    var wl = chkWin(G.board);
+    if (wl) { drawBoard(wl); gameOver(wl); }
+    else if (G.board.every(Boolean)) { drawBoard(); gameDraw(); }
+    else { drawBoard(); updateMsg(); }
+  });
+}
+
+function stopRoomListener() {
+  if (R.listener && db && R.code) {
+    db.ref('rooms/' + R.code).off('value', R.listener);
+    R.listener = null;
+  }
+}
+
+function cleanRoom() {
+  stopRoomListener();
+  R.code = ''; R.isHost = false; R.lastBoard = null;
+  G.myName = '';
+}
+
+function doCancelRoom() {
+  stopRoomListener();
+  if (db && R.code) db.ref('rooms/' + R.code).remove();
+  R.code = ''; R.isHost = false;
+  goScreen('home');
+}
+
+function makeQR(code) {
+  var el = document.getElementById('qrc'); el.innerHTML = '';
+  var url = location.href.split('?')[0] + '?join=' + code;
+  try {
+    new QRCode(el, {text:url, width:180, height:180, colorDark:'#000000', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H});
+  } catch(e) { el.textContent = url; }
+}
+
+function checkURLJoin() {
+  var p = new URLSearchParams(location.search);
+  var c = p.get('join');
+  if (c) {
+    history.replaceState({}, '', location.pathname);
+    document.getElementById('jcode').value = c.toUpperCase();
+    setTimeout(doJoinRoom, 800);
+  }
+}
+
+// ============================================================
+// QR SCANNER
+// ============================================================
+var qrStream = null; var qrInt = null;
+
+function startQRScan() {
+  if (typeof jsQR === 'undefined') { showToast('jsQR לא נטען'); return; }
+  var wrap = document.getElementById('qr-scanner-wrap');
+  wrap.style.display = 'flex';
+  var video = document.getElementById('qr-video');
+  var canvas = document.getElementById('qr-canvas');
+  var ctx = canvas.getContext('2d');
+  document.getElementById('qr-status').textContent = 'מבקש הרשאת מצלמה...';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}})
+    .then(function(stream) {
+      qrStream = stream; video.srcObject = stream; video.play();
+      document.getElementById('qr-status').textContent = 'מכוון את המצלמה לקוד QR הלבן...';
+      qrInt = setInterval(function() {
+        if (video.readyState < video.HAVE_ENOUGH_DATA) return;
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var code = jsQR(imgData.data, imgData.width, imgData.height, {inversionAttempts:'dontInvert'})
+               || jsQR(imgData.data, imgData.width, imgData.height, {inversionAttempts:'onlyInvert'});
+        if (code) {
+          var m = code.data.match(/[?&]join=([A-Za-z0-9]{6})/);
+          var jc = m ? m[1].toUpperCase() : (code.data.trim().length===6 ? code.data.trim().toUpperCase() : null);
+          if (jc) {
+            stopQRScan();
+            document.getElementById('jcode').value = jc;
+            showToast('✅ נסרק! מצטרף...');
+            setTimeout(doJoinRoom, 400);
+          }
+        }
+      }, 200);
+    }).catch(function(e) {
+      document.getElementById('qr-status').textContent = '❌ ' + (e.name==='NotAllowedError'?'נדחתה הרשאת מצלמה':e.message);
+    });
+}
+
+function stopQRScan() {
+  if (qrInt) { clearInterval(qrInt); qrInt = null; }
+  if (qrStream) { qrStream.getTracks().forEach(function(t){t.stop();}); qrStream = null; }
+  document.getElementById('qr-scanner-wrap').style.display = 'none';
+  document.getElementById('qr-status').textContent = 'מכוון את המצלמה לקוד QR הלבן...';
+}
+
+// ============================================================
+// EFFECTS
+// ============================================================
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('sh');
+  setTimeout(function(){t.classList.remove('sh');}, 2500);
+}
+
+function confetti() {
+  var w = document.getElementById('cfw'); w.innerHTML = '';
+  var cols = ['#FFD700','#FF6B00','#00CFFF','#7FFF00','#FF3366'];
+  for (var i = 0; i < 55; i++) {
+    var el = document.createElement('div'); el.className = 'cf';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.background = cols[Math.floor(Math.random()*cols.length)];
+    el.style.width = (6 + Math.random()*7) + 'px';
+    el.style.height = (6 + Math.random()*7) + 'px';
+    el.style.borderRadius = Math.random()>.5 ? '50%' : '2px';
+    el.style.animationDelay = Math.random()*1.4 + 's';
+    el.style.animationDuration = (1.8 + Math.random()*1.4) + 's';
+    w.appendChild(el);
+  }
+  setTimeout(function(){w.innerHTML='';}, 3800);
+}
+
+// ============================================================
+// BIND ALL BUTTONS - no inline onclick at all
+// ============================================================
+function bindButtons() {
+  // Login
+  document.getElementById('btn-google').onclick = doGoogleLogin;
+  document.getElementById('btn-guest').onclick = doGuestLogin;
+  document.getElementById('guest-name').onkeydown = function(e){if(e.key==='Enter')doGuestLogin();};
+
+  // Sign out
+  document.getElementById('btn-signout').onclick = doSignOut;
+
+  // Nav
+  document.getElementById('nb-home').onclick = function(){goScreen('home');};
+  document.getElementById('nb-stats').onclick = function(){goScreen('stats');};
+  document.getElementById('nb-settings').onclick = function(){goScreen('settings');};
+
+  // Home
+  document.getElementById('btn-vsai').onclick = function(){goScreen('vsai');};
+  document.getElementById('btn-vsmp').onclick = function(){
+    document.getElementById('mp-warn').style.display = db ? 'none' : 'block';
+    goScreen('mp');
+  };
+
+  // VS AI
+  document.getElementById('db-easy').onclick = function(){setDiff('easy');};
+  document.getElementById('db-medium').onclick = function(){setDiff('medium');};
+  document.getElementById('db-hard').onclick = function(){setDiff('hard');};
+  document.getElementById('btn-start-ai').onclick = startAI;
+  document.getElementById('btn-back-from-ai').onclick = function(){goScreen('home');};
+
+  // Game
+  document.getElementById('btn-restart').onclick = doRestart;
+  document.getElementById('btn-home-from-game').onclick = doEndGame;
+  document.getElementById('btn-rematch').onclick = doRequestRematch;
+
+  // Multiplayer
+  document.getElementById('btn-create-room').onclick = doCreateRoom;
+  document.getElementById('btn-join').onclick = doJoinRoom;
+  document.getElementById('jcode').onkeydown = function(e){if(e.key==='Enter')doJoinRoom();};
+  document.getElementById('btn-qr-scan').onclick = startQRScan;
+  document.getElementById('btn-back-from-mp').onclick = function(){goScreen('home');};
+
+  // Room
+  document.getElementById('btn-cancel-room').onclick = doCancelRoom;
+
+  // QR scanner
+  document.getElementById('btn-stop-qr').onclick = stopQRScan;
+
+  // Settings
+  document.getElementById('togps').onclick = togglePS;
+  document.getElementById('btn-save-settings').onclick = saveSettings;
+}
+
+// ============================================================
+// START
+// ============================================================
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
